@@ -151,7 +151,6 @@ export default function App() {
             distanceMeters: meters,
             message: `Looks like you’re outside the building. Walk ${formatDistanceFeet(meters)} toward the highlighted entrance to start.`,
           });
-          setActiveFloorId(mapData.floors[0]?.id || '');
         }
       },
       (error) => {
@@ -189,6 +188,18 @@ export default function App() {
       saveRouteGraphs(next);
       return next;
     });
+  }
+
+  function selectFloor(floorId) {
+    const nextFloor = mapData.floors.find((floor) => floor.id === floorId);
+    setActiveFloorId(floorId);
+    if (!nextFloor?.features.some((feature) => feature.id === selectedId)) setSelectedId('');
+    if (!nextFloor?.features.some((feature) => feature.id === highlightId)) setHighlightId('');
+    setSelectedVertexIndex(null);
+    setAreaDrawingMode(false);
+    setAreaDraftPoints([]);
+    setAddPoiMode(false);
+    setLocatingMode(false);
   }
 
   useEffect(() => {
@@ -615,9 +626,9 @@ export default function App() {
       adminMode={adminMode}
       published={published}
       onUpload={handleUpload}
-      onSelectFloor={setActiveFloorId}
+      onSelectFloor={selectFloor}
       onSelectFeature={(feature, floorId) => {
-        if (floorId) setActiveFloorId(floorId);
+        if (floorId) selectFloor(floorId);
         setSelectedId(feature?.id || '');
         setHighlightId(feature?.id || '');
       }}

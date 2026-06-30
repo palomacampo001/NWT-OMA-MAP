@@ -93,6 +93,19 @@ function floorBoundsFromViewBox(viewBox) {
   return L.latLngBounds([viewBox[1], viewBox[0]], [viewBox[1] + viewBox[3], viewBox[0] + viewBox[2]]);
 }
 
+function boundsFromFeatures(features = [], fallbackBounds) {
+  const boxes = features
+    .filter((feature) => feature.visible !== false && feature.bbox?.length >= 4 && feature.type !== 'poi')
+    .map((feature) => feature.bbox)
+    .filter(([, , width, height]) => width > 0 && height > 0);
+  if (!boxes.length) return fallbackBounds;
+  const minX = Math.min(...boxes.map((box) => box[0]));
+  const minY = Math.min(...boxes.map((box) => box[1]));
+  const maxX = Math.max(...boxes.map((box) => box[0] + box[2]));
+  const maxY = Math.max(...boxes.map((box) => box[1] + box[3]));
+  return L.latLngBounds([minY, minX], [maxY, maxX]);
+}
+
 function focusInitialMobileFloor(map, bounds) {
   const isMobile = window.innerWidth < 768;
   if (isMobile) {
@@ -426,7 +439,7 @@ export default function IndoorMapViewer({
         window.setTimeout(() => map.panBy([0, 72], { animate: false }), 0);
       }
     } else {
-      focusInitialMobileFloor(map, bounds);
+      focusInitialMobileFloor(map, boundsFromFeatures(visualFeatures, bounds));
     }
     map.setMinZoom(Math.max(-5, fittedZoom - 0.25));
     requestAnimationFrame(() => map.invalidateSize());
@@ -830,8 +843,8 @@ export default function IndoorMapViewer({
         <button onClick={() => mapRef.current?.zoomIn()} title="Zoom in"><Plus size={17} /></button>
         <button onClick={() => mapRef.current?.zoomOut()} title="Zoom out">−</button>
         <button onClick={() => {
-          const bounds = L.latLngBounds([viewBox[1], viewBox[0]], [viewBox[1] + viewBox[3], viewBox[0] + viewBox[2]]);
-          if (mapRef.current) focusInitialMobileFloor(mapRef.current, bounds);
+          const bounds = floorBoundsFromViewBox(viewBox);
+          if (mapRef.current) focusInitialMobileFloor(mapRef.current, boundsFromFeatures(visualFeatures, bounds));
           setTrackingMode(false);
         }} title="Fit floor"><Crosshair size={17} /></button>
         <button className={trackingMode ? 'tracking-on' : ''} onClick={recenterOnMe} title="My location"><LocateFixed size={17} /></button>
