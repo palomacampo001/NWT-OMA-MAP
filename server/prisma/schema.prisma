@@ -1,0 +1,166 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Building {
+  id             String       @id @default(cuid())
+  name           String
+  address        String?
+  description    String?
+  defaultFloorId String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  floors         Floor[]
+  files          UploadedFile[]
+  features       MapFeature[]
+  pois           POI[]
+  routeNodes     RouteNode[]
+  routeEdges     RouteEdge[]
+  qrAnchors      QrAnchor[]
+  versions       MapVersion[]
+}
+
+model Floor {
+  id          String       @id @default(cuid())
+  buildingId  String
+  name        String
+  levelNumber Int?
+  svgFileId   String?
+  viewBox     String?
+  width       Float?
+  height      Float?
+  sortOrder   Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  building    Building     @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  svgFile     UploadedFile? @relation(fields: [svgFileId], references: [id])
+  features    MapFeature[]
+  pois        POI[]
+  routeNodes  RouteNode[]
+  routeEdges  RouteEdge[]
+  qrAnchors   QrAnchor[]
+}
+
+model UploadedFile {
+  id               String     @id @default(cuid())
+  buildingId       String?
+  originalFilename String
+  fileType         String
+  mimeType         String?
+  storagePath      String?
+  rawText          String?
+  createdAt        DateTime   @default(now())
+  building         Building?  @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  floors           Floor[]
+}
+
+model MapFeature {
+  id                 String   @id @default(cuid())
+  buildingId         String
+  floorId            String
+  sourceSvgId        String?
+  type               String
+  category           String
+  name               String?
+  displayName        String?
+  roomNumber         String?
+  geometryJson       String
+  bboxJson           String?
+  confidence         Float    @default(0.5)
+  visible            Boolean  @default(true)
+  isDeleted          Boolean  @default(false)
+  sourceMetadataJson String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  building           Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  floor              Floor    @relation(fields: [floorId], references: [id], onDelete: Cascade)
+  pois               POI[]
+  linkedRouteNodes   RouteNode[]
+}
+
+model POI {
+  id          String      @id @default(cuid())
+  buildingId  String
+  floorId     String
+  featureId   String?
+  name        String
+  category    String
+  description String?
+  x           Float
+  y           Float
+  searchable  Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  building    Building    @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  floor       Floor       @relation(fields: [floorId], references: [id], onDelete: Cascade)
+  feature     MapFeature? @relation(fields: [featureId], references: [id], onDelete: SetNull)
+}
+
+model RouteNode {
+  id              String      @id @default(cuid())
+  buildingId      String
+  floorId         String
+  name            String?
+  x               Float
+  y               Float
+  nodeType        String
+  linkedFeatureId String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  building        Building    @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  floor           Floor       @relation(fields: [floorId], references: [id], onDelete: Cascade)
+  linkedFeature   MapFeature? @relation(fields: [linkedFeatureId], references: [id], onDelete: SetNull)
+  edgesFrom       RouteEdge[] @relation("fromNode")
+  edgesTo         RouteEdge[] @relation("toNode")
+  qrAnchors       QrAnchor[]
+}
+
+model RouteEdge {
+  id         String    @id @default(cuid())
+  buildingId String
+  floorId    String
+  fromNodeId String
+  toNodeId   String
+  distance   Float
+  accessible Boolean   @default(true)
+  weight     Float     @default(1)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  building   Building  @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  floor      Floor     @relation(fields: [floorId], references: [id], onDelete: Cascade)
+  fromNode   RouteNode @relation("fromNode", fields: [fromNodeId], references: [id], onDelete: Cascade)
+  toNode     RouteNode @relation("toNode", fields: [toNodeId], references: [id], onDelete: Cascade)
+}
+
+model QrAnchor {
+  id          String     @id @default(cuid())
+  buildingId  String
+  floorId     String
+  name        String
+  code        String     @unique
+  x           Float
+  y           Float
+  routeNodeId String?
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  building    Building   @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  floor       Floor      @relation(fields: [floorId], references: [id], onDelete: Cascade)
+  routeNode   RouteNode? @relation(fields: [routeNodeId], references: [id], onDelete: SetNull)
+}
+
+model MapVersion {
+  id           String    @id @default(cuid())
+  buildingId   String
+  versionName  String
+  status       String    @default("draft")
+  snapshotJson String
+  createdAt    DateTime  @default(now())
+  publishedAt  DateTime?
+  building     Building  @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+}

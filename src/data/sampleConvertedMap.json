@@ -1,0 +1,139 @@
+{
+  "building": "Imported SVG Map",
+  "source": {
+    "type": "svg",
+    "filename": "sample-floor.svg",
+    "viewBox": [0, 0, 1200, 780]
+  },
+  "floors": [
+    {
+      "id": "floor-01",
+      "name": "Floor 1",
+      "source": {
+        "type": "svg",
+        "filename": "sample-floor.svg",
+        "viewBox": [0, 0, 1200, 780]
+      },
+      "viewBox": [0, 0, 1200, 780],
+      "features": [
+        {
+          "id": "room-office-101",
+          "type": "room",
+          "category": "office",
+          "name": "Office",
+          "roomNumber": "101",
+          "displayName": "Office 101",
+          "confidence": 0.92,
+          "visible": true,
+          "geometry": { "type": "Polygon", "coordinates": [[[70, 70], [260, 70], [260, 230], [70, 230], [70, 70]]] },
+          "bbox": [70, 70, 190, 160],
+          "sourceSvg": { "id": "sample-office-101", "class": "room", "fill": "#fff", "stroke": "#222" }
+        },
+        {
+          "id": "room-conference-102",
+          "type": "room",
+          "category": "meeting_room",
+          "name": "Conference",
+          "roomNumber": "102",
+          "displayName": "Conference 102",
+          "confidence": 0.94,
+          "visible": true,
+          "geometry": { "type": "Polygon", "coordinates": [[[285, 70], [525, 70], [525, 230], [285, 230], [285, 70]]] },
+          "bbox": [285, 70, 240, 160],
+          "sourceSvg": { "id": "sample-conf-102", "class": "room", "fill": "#fff", "stroke": "#222" }
+        },
+        {
+          "id": "room-restroom",
+          "type": "poi",
+          "category": "restroom",
+          "name": "Restroom",
+          "roomNumber": "",
+          "displayName": "Restroom",
+          "confidence": 0.86,
+          "visible": true,
+          "geometry": { "type": "Polygon", "coordinates": [[[550, 70], [710, 70], [710, 230], [550, 230], [550, 70]]] },
+          "bbox": [550, 70, 160, 160],
+          "sourceSvg": { "id": "sample-restroom", "class": "poi", "fill": "#fff", "stroke": "#222" }
+        },
+        {
+          "id": "corridor-main",
+          "type": "corridor",
+          "category": "corridor",
+          "name": "Main Corridor",
+          "roomNumber": "",
+          "displayName": "Main Corridor",
+          "confidence": 0.68,
+          "visible": true,
+          "geometry": { "type": "Polygon", "coordinates": [[[70, 260], [1130, 260], [1130, 405], [70, 405], [70, 260]]] },
+          "bbox": [70, 260, 1060, 145],
+          "sourceSvg": { "id": "sample-corridor", "class": "corridor", "fill": "#fff", "stroke": "#222" }
+        },
+        {
+          "id": "room-lobby",
+          "type": "poi",
+          "category": "reception",
+          "name": "Reception",
+          "roomNumber": "",
+          "displayName": "Reception",
+          "confidence": 0.9,
+          "visible": true,
+          "geometry": { "type": "Polygon", "coordinates": [[[770, 70], [1130, 70], [1130, 230], [770, 230], [770, 70]]] },
+          "bbox": [770, 70, 360, 160],
+          "sourceSvg": { "id": "sample-reception", "class": "room", "fill": "#fff", "stroke": "#222" }
+        },
+        {
+          "id": "room-kitchen-201",
+          "type": "room",
+          "category": "kitchen",
+          "name": "Kitchen",
+          "roomNumber": "201",
+          "displayName": "Kitchen 201",
+          "confidence": 0.89,
+          "visible": true,
+          "geometry": { "type": "Polygon", "coordinates": [[[70, 435], [305, 435], [305, 690], [70, 690], [70, 435]]] },
+          "bbox": [70, 435, 235, 255],
+          "sourceSvg": { "id": "sample-kitchen", "class": "room", "fill": "#fff", "stroke": "#222" }
+        },
+        {
+          "id": "room-lounge",
+          "type": "room",
+          "category": "lounge",
+          "name": "Lounge",
+          "roomNumber": "",
+          "displayName": "Lounge",
+          "confidence": 0.81,
+          "visible": true,
+          "geometry": { "type": "Polygon", "coordinates": [[[335, 435], [650, 435], [650, 690], [335, 690], [335, 435]]] },
+          "bbox": [335, 435, 315, 255],
+          "sourceSvg": { "id": "sample-lounge", "class": "room", "fill": "#fff", "stroke": "#222" }
+        },
+        {
+          "id": "poi-elevator",
+          "type": "poi",
+          "category": "elevator",
+          "name": "Elevator",
+          "roomNumber": "",
+          "displayName": "Elevator",
+          "confidence": 0.78,
+          "visible": true,
+          "geometry": { "type": "Point", "coordinates": [750, 520] },
+          "bbox": [735, 505, 30, 30],
+          "sourceSvg": { "id": "sample-elevator", "class": "poi", "fill": "#fff", "stroke": "#222" }
+        },
+        {
+          "id": "poi-stairs",
+          "type": "poi",
+          "category": "stairs",
+          "name": "Stairs",
+          "roomNumber": "",
+          "displayName": "Stairs",
+          "confidence": 0.78,
+          "visible": true,
+          "geometry": { "type": "Point", "coordinates": [840, 520] },
+          "bbox": [825, 505, 30, 30],
+          "sourceSvg": { "id": "sample-stairs", "class": "poi", "fill": "#fff", "stroke": "#222" }
+        }
+      ]
+    }
+  ]
+}

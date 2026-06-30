@@ -1,0 +1,30 @@
+{
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:client": "vite --host 0.0.0.0",
+    "dev:server": "node server/src/server.js",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "db:generate": "echo \"Prisma schema is in server/prisma/schema.prisma; local runtime uses file-backed storage.\"",
+    "db:push": "echo \"No push needed for local file-backed storage.\"",
+    "db:seed": "node server/prisma/seed.js",
+    "db:reset": "rm -f server/data/indoor-map-db.json && node server/prisma/seed.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "@vitejs/plugin-react": "latest",
+    "@xmldom/xmldom": "^0.9.10",
+    "concurrently": "^10.0.3",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "leaflet": "^1.9.4",
+    "lucide-react": "latest",
+    "multer": "^2.2.0",
+    "react": "latest",
+    "react-dom": "latest",
+    "vite": "latest"
+  },
+  "devDependencies": {
+    "prisma": "^6.19.0"
+  }
+}
