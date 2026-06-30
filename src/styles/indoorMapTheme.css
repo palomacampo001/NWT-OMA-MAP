@@ -475,6 +475,30 @@
   vector-effect: non-scaling-stroke;
 }
 
+.route-halo {
+  stroke: rgba(255, 255, 255, 0.96);
+  stroke-width: 16;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  pointer-events: none;
+}
+
+.route-line-real,
+.route-line-approximate {
+  stroke: #0f62fe;
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  pointer-events: none;
+}
+
+.route-line-approximate {
+  stroke-dasharray: 14 12;
+  animation: route-flow 1.4s linear infinite;
+}
+
 .route-shadow {
   stroke: rgba(255, 255, 255, 0.92);
   stroke-width: 10;
@@ -777,8 +801,19 @@
 }
 
 @keyframes route-flow {
+  from {
+    stroke-dashoffset: 0;
+  }
   to {
-    stroke-dashoffset: -24;
+    stroke-dashoffset: -26;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-line-approximate,
+  .route-line-flow-highlight,
+  .route-line-approximate-animated {
+    animation: none !important;
   }
 }
 

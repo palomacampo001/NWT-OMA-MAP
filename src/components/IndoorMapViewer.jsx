@@ -229,7 +229,7 @@ function activeLegForFloor(route, floorId) {
 }
 
 function canDrawRouteLine(leg) {
-  return ['manualGraph', 'real'].includes(leg?.quality) && leg?.points?.length > 1;
+  return ['manualGraph', 'real', 'walkableGrid', 'approximateGuidance'].includes(leg?.quality) && leg?.points?.length > 1;
 }
 
 export default function IndoorMapViewer({
@@ -520,10 +520,26 @@ export default function IndoorMapViewer({
     group.clearLayers();
     if (canDrawRouteLine(activeFloorLeg)) {
       const routeLatLngs = activeFloorLeg.points.map(pointLatLng);
-      const approximate = false;
-      const dash = approximate ? '12 14' : null;
-      const halo = L.polyline(routeLatLngs, { pane: 'routeHaloPane', color: '#ffffff', weight: 16, opacity: 0.92, lineCap: 'round', lineJoin: 'round', dashArray: dash }).addTo(group);
-      const line = L.polyline(routeLatLngs, { pane: 'routePane', color: '#0b63ce', weight: 7, opacity: 1, lineCap: 'round', lineJoin: 'round', dashArray: dash, className: 'route-line-real-base' }).addTo(group);
+      const approximate = activeFloorLeg.quality === 'approximateGuidance';
+      const halo = L.polyline(routeLatLngs, {
+        pane: 'routeHaloPane',
+        color: '#ffffff',
+        weight: approximate ? 17 : 16,
+        opacity: 0.94,
+        lineCap: 'round',
+        lineJoin: 'round',
+        className: 'route-halo',
+      }).addTo(group);
+      const line = L.polyline(routeLatLngs, {
+        pane: 'routePane',
+        color: '#0f62fe',
+        weight: 7,
+        opacity: 1,
+        lineCap: 'round',
+        lineJoin: 'round',
+        dashArray: approximate ? '14 12' : null,
+        className: approximate ? 'route-line-approximate' : 'route-line-real',
+      }).addTo(group);
       const flow = !approximate
         ? L.polyline(routeLatLngs, { pane: 'routePane', color: '#93c5fd', weight: 3, opacity: 0.78, lineCap: 'round', lineJoin: 'round', dashArray: '12 18', className: 'route-line-flow-highlight' }).addTo(group)
         : null;
@@ -535,7 +551,7 @@ export default function IndoorMapViewer({
         pane: 'endpointPane',
         icon: L.divIcon({ className: '', html: `<div class="route-focus-ring"></div><div class="route-endpoint ${activeFloorLeg.connector ? 'route-transfer' : 'route-destination'}"></div>`, iconSize: [42, 42], iconAnchor: [21, 21] }),
       }).addTo(group);
-      addLabel(group, { displayName: activeFloorLeg.destinationName }, activeFloorLeg.points[activeFloorLeg.points.length - 1], 'selected');
+      addLabel(group, { displayName: activeFloorLeg.connector ? `Go to ${activeFloorLeg.connector.name}` : activeFloorLeg.destinationName }, activeFloorLeg.points[activeFloorLeg.points.length - 1], 'selected');
       halo.bringToFront();
       line.bringToFront();
       flow?.bringToFront();
@@ -647,9 +663,9 @@ export default function IndoorMapViewer({
           {activeRoute.unavailableReason}
         </div>
       )}
-      {activeRoute?.quality === 'stepOnly' && activeRoute.routeAvailable !== false && (
+      {activeRoute?.quality === 'approximateGuidance' && activeRoute.routeAvailable !== false && (
         <div className="route-unavailable-banner approximate">
-          Route graph needed for hallway-accurate path on this floor.
+          Approximate guidance shown — follow visible hallways.
         </div>
       )}
       {!activeRoute && locationState?.message && (

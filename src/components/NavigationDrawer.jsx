@@ -23,7 +23,7 @@ export default function NavigationDrawer({ route, activeFloorId, onSelectFloor, 
   }
 
   return (
-    <section className={['navigation-drawer route-panel-enter', expanded ? 'expanded' : 'collapsed', route.quality === 'stepOnly' ? 'step-only' : ''].filter(Boolean).join(' ')}>
+    <section className={['navigation-drawer route-panel-enter', expanded ? 'expanded' : 'collapsed', route.quality === 'approximateGuidance' ? 'approximate-guidance' : ''].filter(Boolean).join(' ')}>
       <button
         className="drawer-handle"
         onClick={() => setExpanded((value) => !value)}
@@ -59,7 +59,13 @@ export default function NavigationDrawer({ route, activeFloorId, onSelectFloor, 
           </div>
           <div>
             <strong>{route.routeAvailable === false ? 'No walkable route yet' : `${Math.round(route.distance)} map units`}</strong>
-            <span>{route.routeAvailable === false ? route.unavailableReason : route.quality === 'stepOnly' ? 'Route graph needed before drawing a hallway path.' : 'Using route graph'}</span>
+            <span>
+              {route.routeAvailable === false
+                ? route.unavailableReason
+                : route.quality === 'approximateGuidance'
+                  ? 'Approximate guidance. Follow visible hallways.'
+                  : 'Hallway route shown.'}
+            </span>
           </div>
         </div>
         <ol className="direction-list">
