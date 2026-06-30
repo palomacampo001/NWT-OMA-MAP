@@ -154,6 +154,71 @@ function generateInstructions(points, destinationName) {
   return steps;
 }
 
+function graphHasEdges(graph) {
+  return Boolean(graph?.nodes?.length && graph?.edges?.length);
+}
+
+const routeWalkableTypes = new Set(['entrance', 'reception', 'hallway', 'intersection', 'turn', 'doorway', 'destination_approach', 'destination_snap']);
+
+function routeNodePoint(node) {
+  return node ? { x: node.x, y: node.y, floorId: node.floorId, id: node.id, name: node.name, category: node.type } : null;
+}
+
+function nearestGraphNode(point, graph, types = routeWalkableTypes) {
+  return nearestRouteNode(point, graph, (node) => types.has(node.type));
+}
+
+function findDestinationApproachNode(destinationFeature, destinationPoint, graph) {
+  if (!graphHasEdges(graph)) return null;
+  const nodes = graph.nodes || [];
+  const linked = nodes.find((node) => (
+    node.linkedFeatureId === destinationFeature?.id
+    || node.linkedPoiId === destinationFeature?.id
+    || node.connectorGroupId === destinationFeature?.id
+  ));
+  if (linked) return linked;
+  const preferences = [
+    new Set(['destination_approach', 'destination_snap']),
+    new Set(['doorway']),
+    new Set(['hallway', 'intersection', 'turn']),
+  ];
+  for (const types of preferences) {
+    const node = nearestGraphNode(destinationPoint, graph, types);
+    if (node) return node;
+  }
+  return null;
+}
+
+function findConnectorGraphNode(connector, graph) {
+  if (!connector || !graphHasEdges(graph)) return null;
+  const type = connector.type === 'stairs' ? 'stair' : connector.type;
+  const nodes = graph.nodes || [];
+  const linked = nodes.find((node) => (
+    node.linkedPoiId === connector.poiId
+    || node.linkedFeatureId === connector.poiId
+    || (node.connectorGroupId && connector.key && node.connectorGroupId === connector.key)
+  ));
+  if (linked) return linked;
+  return nearestGraphNode(connector.point, graph, new Set([type])) || nearestGraphNode(connector.point, graph);
+}
+
+function unavailableRoute({ floorId, destinationId, destinationName, activeFloorIds, reason }) {
+  return {
+    floorId,
+    destinationId,
+    destinationName,
+    points: [],
+    heading: 0,
+    distance: 0,
+    routeAvailable: false,
+    quality: 'unavailable',
+    mode: 'unavailable',
+    unavailableReason: reason,
+    activeFloorIds,
+    instructions: [{ id: 'route-graph-needed', text: reason, distance: 0, direction: 'unavailable' }],
+  };
+}
+
 export function buildRoute(floor, fromPoint, destinationFeature) {
   const destination = featureCenter(destinationFeature);
   if (!floor || !fromPoint || !destination) return null;
@@ -230,20 +295,30 @@ export function buildRoute(floor, fromPoint, destinationFeature) {
   };
 }
 
-function sameFloorRouteOrApprox({ id, floor, from, destinationFeature, instruction }) {
-  const to = featureCenter(destinationFeature);
-  return approximateLeg({ id, floor, from, to, destinationName: formatFeatureLabel(destinationFeature), instruction: instruction || `Follow the approximate guidance to ${formatFeatureLabel(destinationFeature)}.` });
-}
-
-function graphLeg({ id, floor, graph, from, to, destinationName, instruction, connector }) {
-  const start = nearestRouteNode(from, graph);
-  const end = nearestRouteNode(to, graph);
+function graphLeg({ id, floor, graph, from, to, destinationName, instruction, connector, startConnector, endConnector, destinationFeature }) {
+  if (!graphHasEdges(graph)) return null;
+  const start = startConnector
+    ? findConnectorGraphNode(startConnector, graph)
+    : nearestGraphNode(from, graph);
+  const end = endConnector
+    ? findConnectorGraphNode(endConnector, graph)
+    : destinationFeature
+      ? findDestinationApproachNode(destinationFeature, to, graph)
+      : nearestGraphNode(to, graph);
   const nodePath = shortestGraphPath(graph, start?.id, end?.id);
   if (!nodePath?.length) return null;
   const graphPoints = nodesToPoints(nodePath);
-  const points = dedupePath([from, ...graphPoints, to]);
+  const points = dedupePath(graphPoints);
   const distanceTotal = points.reduce((sum, point, index) => (index ? sum + distance(points[index - 1], point) : sum), 0);
-  const nextPoint = points[1] || to;
+  const nextPoint = points[1] || points[0] || to;
+  const endPoint = points[points.length - 1];
+  const endpointConnector = !connector && endPoint && to && distance(endPoint, to) > 6
+    ? {
+      from: endPoint,
+      to,
+      label: 'Destination is just off the hallway.',
+    }
+    : null;
   return {
     id,
     type: 'walk',
@@ -258,6 +333,7 @@ function graphLeg({ id, floor, graph, from, to, destinationName, instruction, co
     mode: 'route-graph',
     destinationName,
     connector,
+    endpointConnector,
     instructions: [{ id: `${id}-step`, text: instruction, distance: distanceTotal, direction: 'graph' }],
   };
 }
@@ -317,7 +393,6 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
   if (!originFloor || !destinationFloor || !originPoint || !destinationPoint) return null;
 
   if (originFloorId === destinationFloorId) {
-    const destinationPoint = featureCenter(destinationFeature);
     const graph = routeGraphs[originFloorId];
     const graphRoute = graphLeg({
       id: 'leg-same-floor',
@@ -326,15 +401,19 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
       from: originPoint,
       to: destinationPoint,
       destinationName,
+      destinationFeature,
       instruction: `Continue to ${destinationName}.`,
     });
-    const leg = graphRoute || sameFloorRouteOrApprox({
-      id: 'leg-same-floor',
-      floor: originFloor,
-      from: originPoint,
-      destinationFeature,
-      instruction: `Approximate guidance shown to ${destinationName}. Follow visible hallways.`,
-    });
+    if (!graphRoute) {
+      return unavailableRoute({
+        floorId: originFloorId,
+        destinationId: destinationFeature.id,
+        destinationName,
+        activeFloorIds: [originFloorId],
+        reason: 'Hallway route graph needed for this area. Add connected route nodes in Admin.',
+      });
+    }
+    const leg = graphRoute;
     return {
       id: `route-${originFloorId}-${destinationFloorId}-${destinationFeature.id}`,
       originFloorId,
@@ -343,16 +422,16 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
       destinationId: destinationFeature.id,
       destinationName,
       routeAvailable: true,
-      approximate: Boolean(leg.approximate),
-      quality: leg.quality || (leg.approximate ? 'approximateGuidance' : 'manualGraph'),
-      mode: leg.approximate ? 'approximate-guidance' : 'route-graph',
+      approximate: false,
+      quality: leg.quality || 'manualGraph',
+      mode: 'route-graph',
       points: leg.points,
       heading: leg.heading,
       distance: leg.distance,
       legs: [leg],
       activeFloorIds: [originFloorId],
       instructions: leg.instructions,
-      notice: leg.approximate ? 'Approximate guidance shown — follow visible hallways.' : 'Hallway route shown.',
+      notice: 'Hallway route shown.',
     };
   }
 
@@ -388,15 +467,8 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
     to: pair.origin.point,
     destinationName: pair.origin.name,
     connector: pair.origin,
+    endConnector: pair.origin,
     instruction: `Follow the highlighted route to ${connectorTypeLabel(pair.origin.type)} ${pair.origin.name}.`,
-  }) || approximateLeg({
-    id: 'leg-to-connector',
-    floor: originFloor,
-    from: originPoint,
-    to: pair.origin.point,
-    destinationName: pair.origin.name,
-    connector: pair.origin,
-    instruction: `Follow the approximate guidance to ${connectorTypeLabel(pair.origin.type)} ${pair.origin.name}.`,
   });
   const destinationLeg = graphLeg({
     id: 'leg-from-connector',
@@ -405,17 +477,25 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
     from: pair.destination.point,
     to: destinationPoint,
     destinationName,
+    startConnector: pair.destination,
+    destinationFeature,
     connector: pair.destination,
     instruction: `From ${connectorTypeLabel(pair.destination.type)} ${pair.destination.name}, follow the highlighted route to ${destinationName}.`,
-  }) || approximateLeg({
-    id: 'leg-from-connector',
-    floor: destinationFloor,
-    from: pair.destination.point,
-    to: destinationPoint,
-    destinationName,
-    connector: pair.destination,
-    instruction: `From ${connectorTypeLabel(pair.destination.type)} ${pair.destination.name}, follow the approximate guidance to ${destinationName}.`,
   });
+  if (!originLeg || !destinationLeg) {
+    const missing = !originLeg && !destinationLeg
+      ? `${floorLabel(originFloor)} and ${floorLabel(destinationFloor)}`
+      : !originLeg
+        ? floorLabel(originFloor)
+        : floorLabel(destinationFloor);
+    return unavailableRoute({
+      floorId: originFloorId,
+      destinationId: destinationFeature.id,
+      destinationName,
+      activeFloorIds: [originFloorId, destinationFloorId],
+      reason: `Hallway route graph needed for ${missing}. Add connected route nodes in Admin before routing through walls is allowed.`,
+    });
+  }
   const transfer = {
     id: 'vertical-transfer',
     type: 'transfer',
@@ -444,9 +524,9 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
     destinationId: destinationFeature.id,
     destinationName,
     routeAvailable: true,
-    approximate: originLeg.approximate || destinationLeg.approximate,
-    quality: originLeg.approximate || destinationLeg.approximate ? 'approximateGuidance' : 'manualGraph',
-    mode: originLeg.approximate || destinationLeg.approximate ? 'multi-floor-approximate-guidance' : 'multi-floor-route-graph',
+    approximate: false,
+    quality: 'manualGraph',
+    mode: 'multi-floor-route-graph',
     points: originLeg.points,
     heading: originLeg.heading,
     distance: originLeg.distance + destinationLeg.distance,
@@ -454,7 +534,7 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
     activeFloorIds: [originFloorId, destinationFloorId],
     transfer,
     instructions,
-    notice: originLeg.approximate || destinationLeg.approximate ? 'Approximate guidance shown — follow visible hallways.' : 'Hallway route shown.',
+    notice: 'Hallway route shown.',
   };
 }
 

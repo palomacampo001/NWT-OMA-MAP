@@ -267,7 +267,7 @@ function editableRing(feature) {
 }
 
 function canDrawRouteLine(leg) {
-  return ['manualGraph', 'real', 'walkableGrid', 'approximateGuidance'].includes(leg?.quality) && leg?.points?.length > 1;
+  return leg?.quality === 'manualGraph' && leg?.points?.length > 1;
 }
 
 export default function IndoorMapViewer({
@@ -644,6 +644,19 @@ export default function IndoorMapViewer({
         icon: L.divIcon({ className: '', html: `<div class="route-focus-ring"></div><div class="route-endpoint ${activeFloorLeg.connector ? 'route-transfer' : 'route-destination'}"></div>`, iconSize: [42, 42], iconAnchor: [21, 21] }),
       }).addTo(group);
       addLabel(group, { displayName: activeFloorLeg.connector ? `Go to ${activeFloorLeg.connector.name}` : activeFloorLeg.destinationName }, activeFloorLeg.points[activeFloorLeg.points.length - 1], 'selected');
+      if (activeFloorLeg.endpointConnector?.from && activeFloorLeg.endpointConnector?.to) {
+        L.polyline([pointLatLng(activeFloorLeg.endpointConnector.from), pointLatLng(activeFloorLeg.endpointConnector.to)], {
+          pane: 'routePane',
+          color: '#0f62fe',
+          weight: 4,
+          opacity: 0.72,
+          lineCap: 'round',
+          lineJoin: 'round',
+          dashArray: '3 10',
+          className: 'route-endpoint-connector',
+        }).addTo(group);
+        addLabel(group, { displayName: activeFloorLeg.endpointConnector.label || 'Destination is just off the hallway.' }, activeFloorLeg.endpointConnector.to, 'quiet');
+      }
       halo.bringToFront();
       line.bringToFront();
       flow?.bringToFront();

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-const nodeTypes = ['hallway', 'intersection', 'entrance', 'reception', 'elevator', 'escalator', 'stair', 'destination_snap'];
+const nodeTypes = ['hallway', 'intersection', 'turn', 'doorway', 'destination_approach', 'entrance', 'reception', 'elevator', 'escalator', 'stair'];
 
 export default function RouteGraphEditor({ floor, graph, onUpdateGraph }) {
   const [visible, setVisible] = useState(false);
