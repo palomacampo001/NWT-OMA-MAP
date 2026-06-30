@@ -3,6 +3,10 @@ import L from 'leaflet';
 import { AlertTriangle, Compass, Crosshair, LocateFixed, Navigation, Plus } from 'lucide-react';
 import { featureCenter } from '../utils/navigation.js';
 
+const svgCoordinateCrs = L.extend({}, L.CRS.Simple, {
+  transformation: new L.Transformation(1, 0, 1, 0),
+});
+
 const amenityCategories = new Set([
   'cafeteria',
   'kitchen',
@@ -312,7 +316,7 @@ export default function IndoorMapViewer({
   useEffect(() => {
     if (!hostRef.current || mapRef.current) return;
     const map = L.map(hostRef.current, {
-      crs: L.CRS.Simple,
+      crs: svgCoordinateCrs,
       zoomControl: false,
       attributionControl: false,
       minZoom: -5,
@@ -372,6 +376,16 @@ export default function IndoorMapViewer({
     window.setTimeout(() => map.invalidateSize({ animate: false }), 120);
     window.setTimeout(() => map.invalidateSize({ animate: false }), 420);
   }, [floor?.id]);
+
+  useEffect(() => {
+    if (!adminMode || floor?.id !== 'floor-us-oma-01') return;
+    const entrance = floor.features?.find((feature) => feature.id === 'poi-main-ibm-entrance');
+    if (entrance?.geometry?.type !== 'Point') return;
+    const [x, y] = entrance.geometry.coordinates;
+    const rendered = pointLatLng({ x, y });
+    console.info(`Main IBM Entrance source point: x=${x}, y=${y}`);
+    console.info(`Rendered Leaflet point: lat=${rendered.lat}, lng=${rendered.lng}`);
+  }, [adminMode, floor]);
 
   useEffect(() => {
     const group = graphRef.current;
