@@ -22,6 +22,7 @@ const paneZ = {
   overviewPane: 150,
   detailSvgPane: 200,
   spacePane: 300,
+  graphPane: 420,
   majorPoiPane: 500,
   labelPane: 600,
   routeHaloPane: 880,
@@ -228,7 +229,7 @@ function activeLegForFloor(route, floorId) {
 }
 
 function canDrawRouteLine(leg) {
-  return ['real', 'computedApproximate', 'approximateGuidance'].includes(leg?.quality) && leg?.points?.length > 1;
+  return ['manualGraph', 'real'].includes(leg?.quality) && leg?.points?.length > 1;
 }
 
 export default function IndoorMapViewer({
@@ -241,6 +242,7 @@ export default function IndoorMapViewer({
   userLocation,
   locationState,
   startAnchor,
+  routeGraph,
   activeRoute,
   adminMode = false,
   onSelectFeature,
@@ -254,6 +256,7 @@ export default function IndoorMapViewer({
   const backgroundUrlRef = useRef('');
   const layerRef = useRef(null);
   const routeRef = useRef(null);
+  const graphRef = useRef(null);
   const userMarkerRef = useRef(null);
   const anchorMarkerRef = useRef(null);
   const addPoiModeRef = useRef(addPoiMode);
@@ -304,7 +307,7 @@ export default function IndoorMapViewer({
     setFloorTransitioning(true);
     const timer = window.setTimeout(() => setFloorTransitioning(false), 260);
     return () => window.clearTimeout(timer);
-  }, [floor?.id]);
+  }, [floor?.id, selectedId, activeRoute, startAnchor, viewBox]);
 
   useEffect(() => {
     if (!hostRef.current || mapRef.current) return;
@@ -339,6 +342,7 @@ export default function IndoorMapViewer({
     setZoomLevel(map.getZoom());
     layerRef.current = L.layerGroup().addTo(map);
     routeRef.current = L.layerGroup().addTo(map);
+    graphRef.current = L.layerGroup().addTo(map);
     requestAnimationFrame(() => map.invalidateSize());
   }, [onAddPoi, onSetLocation]);
 
@@ -355,14 +359,52 @@ export default function IndoorMapViewer({
     if (!map || !floor) return;
     const bounds = floorBoundsFromViewBox(viewBox);
     map.setMaxBounds(bounds);
-    focusInitialMobileFloor(map, bounds);
     const fittedZoom = map.getBoundsZoom(bounds, false, [32, 32]);
     setBaseZoom(fittedZoom);
+    if (startAnchor?.floorId === floor.id && !selectedId && !activeRoute) {
+      const zoomBoost = window.innerWidth < 768 ? 1.35 : 0.8;
+      map.setView(pointLatLng(startAnchor.mapPoint), Math.min(fittedZoom + zoomBoost, map.getMaxZoom()), { animate: false });
+    } else {
+      focusInitialMobileFloor(map, bounds);
+    }
     map.setMinZoom(Math.max(-5, fittedZoom - 0.25));
     requestAnimationFrame(() => map.invalidateSize());
     window.setTimeout(() => map.invalidateSize({ animate: false }), 120);
     window.setTimeout(() => map.invalidateSize({ animate: false }), 420);
   }, [floor?.id]);
+
+  useEffect(() => {
+    const group = graphRef.current;
+    if (!group) return;
+    group.clearLayers();
+    if (!adminMode || !routeGraph) return;
+    const byId = new Map((routeGraph.nodes || []).map((node) => [node.id, node]));
+    (routeGraph.edges || []).forEach((edge) => {
+      const from = byId.get(edge.fromNodeId);
+      const to = byId.get(edge.toNodeId);
+      if (!from || !to) return;
+      L.polyline([pointLatLng(from), pointLatLng(to)], {
+        pane: 'graphPane',
+        color: floorAccent,
+        weight: 2,
+        opacity: 0.72,
+        dashArray: '4 6',
+        interactive: false,
+      }).addTo(group);
+    });
+    (routeGraph.nodes || []).forEach((node) => {
+      L.circleMarker(pointLatLng(node), {
+        pane: 'graphPane',
+        radius: ['elevator', 'stair', 'escalator', 'entrance', 'reception'].includes(node.type) ? 5 : 3.5,
+        color: '#ffffff',
+        weight: 2,
+        fillColor: floorAccent,
+        fillOpacity: 0.92,
+        opacity: 1,
+        interactive: false,
+      }).addTo(group);
+    });
+  }, [adminMode, routeGraph, floorAccent]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -478,10 +520,10 @@ export default function IndoorMapViewer({
     group.clearLayers();
     if (canDrawRouteLine(activeFloorLeg)) {
       const routeLatLngs = activeFloorLeg.points.map(pointLatLng);
-      const approximate = ['computedApproximate', 'approximateGuidance'].includes(activeFloorLeg.quality);
+      const approximate = false;
       const dash = approximate ? '12 14' : null;
       const halo = L.polyline(routeLatLngs, { pane: 'routeHaloPane', color: '#ffffff', weight: 16, opacity: 0.92, lineCap: 'round', lineJoin: 'round', dashArray: dash }).addTo(group);
-      const line = L.polyline(routeLatLngs, { pane: 'routePane', color: '#0b63ce', weight: approximate ? 6 : 7, opacity: 1, lineCap: 'round', lineJoin: 'round', dashArray: dash, className: approximate ? 'route-line-approximate-animated' : 'route-line-real-base' }).addTo(group);
+      const line = L.polyline(routeLatLngs, { pane: 'routePane', color: '#0b63ce', weight: 7, opacity: 1, lineCap: 'round', lineJoin: 'round', dashArray: dash, className: 'route-line-real-base' }).addTo(group);
       const flow = !approximate
         ? L.polyline(routeLatLngs, { pane: 'routePane', color: '#93c5fd', weight: 3, opacity: 0.78, lineCap: 'round', lineJoin: 'round', dashArray: '12 18', className: 'route-line-flow-highlight' }).addTo(group)
         : null;
@@ -605,9 +647,9 @@ export default function IndoorMapViewer({
           {activeRoute.unavailableReason}
         </div>
       )}
-      {['computedApproximate', 'approximateGuidance'].includes(activeRoute?.quality) && activeRoute.routeAvailable !== false && (
+      {activeRoute?.quality === 'stepOnly' && activeRoute.routeAvailable !== false && (
         <div className="route-unavailable-banner approximate">
-          Approximate guidance — follow visible hallways.
+          Route graph needed for hallway-accurate path on this floor.
         </div>
       )}
       {!activeRoute && locationState?.message && (

@@ -1,4 +1,5 @@
 import { bboxCenter, distance } from './geometryHelpers.js';
+import { nearestRouteNode, nodesToPoints, shortestGraphPath } from './routeGraphs.js';
 
 export function featureCenter(feature) {
   if (!feature) return null;
@@ -207,8 +208,18 @@ export function buildRoute(floor, fromPoint, destinationFeature) {
   };
 }
 
-function approximateLeg({ id, floor, from, to, destinationName, instruction, connector }) {
-  const points = dedupePath(orthogonalBetween(from, to, 'horizontal'));
+function sameFloorRouteOrApprox({ id, floor, from, destinationFeature, instruction }) {
+  const to = featureCenter(destinationFeature);
+  return stepOnlyLeg({ id, floor, from, to, destinationName: formatFeatureLabel(destinationFeature), instruction: instruction || `Continue to ${formatFeatureLabel(destinationFeature)}.` });
+}
+
+function graphLeg({ id, floor, graph, from, to, destinationName, instruction, connector }) {
+  const start = nearestRouteNode(from, graph);
+  const end = nearestRouteNode(to, graph);
+  const nodePath = shortestGraphPath(graph, start?.id, end?.id);
+  if (!nodePath?.length) return null;
+  const graphPoints = nodesToPoints(nodePath);
+  const points = dedupePath([from, ...graphPoints, to]);
   const distanceTotal = points.reduce((sum, point, index) => (index ? sum + distance(points[index - 1], point) : sum), 0);
   const nextPoint = points[1] || to;
   return {
@@ -220,29 +231,32 @@ function approximateLeg({ id, floor, from, to, destinationName, instruction, con
     distance: distanceTotal,
     heading: Math.atan2(nextPoint.y - from.y, nextPoint.x - from.x) * (180 / Math.PI) + 90,
     routeAvailable: true,
-    approximate: true,
-    quality: 'approximateGuidance',
-    mode: 'approximate-guidance',
+    approximate: false,
+    quality: 'manualGraph',
+    mode: 'route-graph',
     destinationName,
     connector,
-    instructions: [{ id: `${id}-step`, text: instruction, distance: distanceTotal, direction: 'approximate' }],
+    instructions: [{ id: `${id}-step`, text: instruction, distance: distanceTotal, direction: 'graph' }],
   };
 }
 
-function sameFloorRouteOrApprox({ id, floor, from, destinationFeature, instruction }) {
-  const real = buildRoute(floor, from, destinationFeature);
-  if (real?.routeAvailable) {
-    return { ...real, id, type: 'walk', floorName: floorLabel(floor), approximate: false, quality: 'real' };
-  }
-  const to = featureCenter(destinationFeature);
-  return approximateLeg({
+function stepOnlyLeg({ id, floor, from, to, destinationName, instruction, connector }) {
+  return {
     id,
-    floor,
-    from,
-    to,
-    destinationName: formatFeatureLabel(destinationFeature),
-    instruction: instruction || `Continue to ${formatFeatureLabel(destinationFeature)}.`,
-  });
+    type: 'walk',
+    floorId: floor.id,
+    floorName: floorLabel(floor),
+    points: [],
+    distance: from && to ? distance(from, to) : 0,
+    heading: 0,
+    routeAvailable: true,
+    approximate: true,
+    quality: 'stepOnly',
+    mode: 'step-only',
+    destinationName,
+    connector,
+    instructions: [{ id: `${id}-step`, text: instruction, distance: from && to ? distance(from, to) : 0, direction: 'step' }],
+  };
 }
 
 function bestConnectorPair({ floors, originFloorId, destinationFloorId, originPoint, destinationPoint }) {
@@ -264,7 +278,7 @@ function bestConnectorPair({ floors, originFloorId, destinationFloorId, originPo
   return pairs.sort((a, b) => a.score - b.score)[0] || null;
 }
 
-export function planIndoorRoute({ floors, originFloorId, originPoint, destinationFloorId, destinationFeature }) {
+export function planIndoorRoute({ floors, originFloorId, originPoint, destinationFloorId, destinationFeature, routeGraphs = {} }) {
   const originFloor = floors.find((floor) => floor.id === originFloorId);
   const destinationFloor = floors.find((floor) => floor.id === destinationFloorId);
   const destinationPoint = featureCenter(destinationFeature);
@@ -272,12 +286,23 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
   if (!originFloor || !destinationFloor || !originPoint || !destinationPoint) return null;
 
   if (originFloorId === destinationFloorId) {
-    const leg = sameFloorRouteOrApprox({
+    const destinationPoint = featureCenter(destinationFeature);
+    const graph = routeGraphs[originFloorId];
+    const graphRoute = graphLeg({
+      id: 'leg-same-floor',
+      floor: originFloor,
+      graph,
+      from: originPoint,
+      to: destinationPoint,
+      destinationName,
+      instruction: `Continue to ${destinationName}.`,
+    });
+    const leg = graphRoute || sameFloorRouteOrApprox({
       id: 'leg-same-floor',
       floor: originFloor,
       from: originPoint,
       destinationFeature,
-      instruction: `Continue to ${destinationName}.`,
+      instruction: `Route graph needed for hallway-accurate path to ${destinationName}.`,
     });
     return {
       id: `route-${originFloorId}-${destinationFloorId}-${destinationFeature.id}`,
@@ -288,15 +313,15 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
       destinationName,
       routeAvailable: true,
       approximate: Boolean(leg.approximate),
-      quality: leg.quality || (leg.approximate ? 'approximateGuidance' : 'real'),
-      mode: leg.approximate ? 'approximate-guidance' : 'corridor-guided',
+      quality: leg.quality || (leg.approximate ? 'stepOnly' : 'manualGraph'),
+      mode: leg.approximate ? 'step-only' : 'route-graph',
       points: leg.points,
       heading: leg.heading,
       distance: leg.distance,
       legs: [leg],
       activeFloorIds: [originFloorId],
       instructions: leg.instructions,
-      notice: leg.approximate ? 'Approximate guidance — follow visible hallways.' : '',
+      notice: leg.approximate ? 'Route graph needed for hallway-accurate path on this floor.' : '',
     };
   }
 
@@ -318,23 +343,43 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
     };
   }
 
-  const originLeg = approximateLeg({
+  const originGraph = routeGraphs[originFloorId];
+  const destinationGraph = routeGraphs[destinationFloorId];
+  const originLeg = graphLeg({
+    id: 'leg-to-connector',
+    floor: originFloor,
+    graph: originGraph,
+    from: originPoint,
+    to: pair.origin.point,
+    destinationName: pair.origin.name,
+    connector: pair.origin,
+    instruction: `Follow the highlighted route to ${connectorTypeLabel(pair.origin.type)} ${pair.origin.name}.`,
+  }) || stepOnlyLeg({
     id: 'leg-to-connector',
     floor: originFloor,
     from: originPoint,
     to: pair.origin.point,
     destinationName: pair.origin.name,
     connector: pair.origin,
-    instruction: `Follow the highlighted route to ${connectorTypeLabel(pair.origin.type)} ${pair.origin.name}.`,
+    instruction: `Route graph needed for hallway-accurate path to ${connectorTypeLabel(pair.origin.type)} ${pair.origin.name}.`,
   });
-  const destinationLeg = approximateLeg({
+  const destinationLeg = graphLeg({
+    id: 'leg-from-connector',
+    floor: destinationFloor,
+    graph: destinationGraph,
+    from: pair.destination.point,
+    to: destinationPoint,
+    destinationName,
+    connector: pair.destination,
+    instruction: `From ${connectorTypeLabel(pair.destination.type)} ${pair.destination.name}, follow the highlighted route to ${destinationName}.`,
+  }) || stepOnlyLeg({
     id: 'leg-from-connector',
     floor: destinationFloor,
     from: pair.destination.point,
     to: destinationPoint,
     destinationName,
     connector: pair.destination,
-    instruction: `From ${connectorTypeLabel(pair.destination.type)} ${pair.destination.name}, follow the highlighted route to ${destinationName}.`,
+    instruction: `Route graph needed for hallway-accurate path from ${connectorTypeLabel(pair.destination.type)} ${pair.destination.name} to ${destinationName}.`,
   });
   const transfer = {
     id: 'vertical-transfer',
@@ -364,9 +409,9 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
     destinationId: destinationFeature.id,
     destinationName,
     routeAvailable: true,
-    approximate: true,
-    quality: 'approximateGuidance',
-    mode: 'multi-floor-approximate-guidance',
+    approximate: originLeg.approximate || destinationLeg.approximate,
+    quality: originLeg.approximate || destinationLeg.approximate ? 'stepOnly' : 'manualGraph',
+    mode: originLeg.approximate || destinationLeg.approximate ? 'multi-floor-step-only' : 'multi-floor-route-graph',
     points: originLeg.points,
     heading: originLeg.heading,
     distance: originLeg.distance + destinationLeg.distance,
@@ -374,7 +419,7 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
     activeFloorIds: [originFloorId, destinationFloorId],
     transfer,
     instructions,
-    notice: 'Approximate guidance — follow visible hallways.',
+    notice: originLeg.approximate || destinationLeg.approximate ? 'Route graph needed for hallway-accurate path on one or more floors.' : '',
   };
 }
 

@@ -26,8 +26,8 @@ export default function RoutePanel({ userLocation, activeRoute, routeDestination
             {activeRoute
               ? activeRoute.routeAvailable === false
                 ? 'Walking route unavailable until a walkable corridor graph exists'
-                : activeRoute.quality === 'approximateGuidance'
-                  ? 'Approximate guidance · follow visible hallways'
+                : activeRoute.quality === 'stepOnly'
+                  ? 'Route graph needed · no path line'
                   : `${Math.round(activeRoute.distance)} map units · corridor guided`
               : userLocation
                 ? 'Pick a destination to start guidance'

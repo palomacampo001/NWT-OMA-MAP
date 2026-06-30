@@ -4,7 +4,8 @@ import { parseSvg } from './utils/parseSvg.js';
 import { generateIndoorMapData } from './utils/detectFeatures.js';
 import { loadMapState, saveMapState } from './utils/storage.js';
 import { planIndoorRoute } from './utils/navigation.js';
-import { BUILDING_GEOFENCE, entranceAnchorForFloor, formatDistanceFeet, haversineDistanceMeters, isInsideBuildingGeofence } from './utils/locationConfig.js';
+import { BUILDING_GEOFENCE, formatDistanceFeet, getDefaultStartAnchor, haversineDistanceMeters, isInsideBuildingGeofence } from './utils/locationConfig.js';
+import { loadRouteGraphs, saveRouteGraphs } from './utils/routeGraphs.js';
 import sampleMap from './data/sampleConvertedMap.json';
 import {
   createBuilding,
@@ -46,6 +47,7 @@ export default function App() {
   const [adminMode, setAdminMode] = useState(isAdminUrl);
   const [published, setPublished] = useState(() => Boolean(savedState?.floors?.length));
   const [buildingId, setBuildingId] = useState(savedState?.building?.id || '');
+  const [routeGraphs, setRouteGraphs] = useState({});
 
   useEffect(() => {
     const load = isAdminUrl
@@ -130,6 +132,19 @@ export default function App() {
   }, [mapData]);
 
   useEffect(() => {
+    if (!mapData.floors.length) return;
+    setRouteGraphs(loadRouteGraphs(mapData.floors));
+  }, [mapData.floors]);
+
+  function updateRouteGraph(floorId, updater) {
+    setRouteGraphs((current) => {
+      const next = { ...current, [floorId]: updater(current[floorId] || { floorId, nodes: [], edges: [] }) };
+      saveRouteGraphs(next);
+      return next;
+    });
+  }
+
+  useEffect(() => {
     if (!activeFloorId && mapData.floors.length) {
       setActiveFloorId(mapData.floors[0].id);
     }
@@ -163,8 +178,9 @@ export default function App() {
       originPoint: userLocation.point,
       destinationFloorId: routeDestinationFloor.id,
       destinationFeature: routeDestination,
+      routeGraphs,
     });
-  }, [mapData.floors, userLocation, routeDestination, routeDestinationFloor]);
+  }, [mapData.floors, userLocation, routeDestination, routeDestinationFloor, routeGraphs]);
 
   function updateFloor(floorId, updater) {
     setMapData((current) => ({
@@ -287,7 +303,7 @@ export default function App() {
     setHighlightId(feature.id);
     setRouteDestinationId(feature.id);
     if (!userLocation && floorId) {
-      const entrance = entranceAnchorForFloor(mapData.floors[0]);
+      const entrance = getDefaultStartAnchor(mapData.floors);
       if (entrance) {
         setActiveFloorId(entrance.floorId);
         setUserLocation({ floorId: entrance.floorId, point: entrance.mapPoint, approximate: true });
@@ -392,7 +408,8 @@ export default function App() {
       locatingMode={locatingMode}
       userLocation={userLocation}
       locationState={locationState}
-      startAnchor={entranceAnchorForFloor(mapData.floors[0])}
+      startAnchor={getDefaultStartAnchor(mapData.floors)}
+      routeGraphs={routeGraphs}
       activeRoute={activeRoute}
       routeDestinationId={routeDestinationId}
       buildingId={buildingId}
@@ -407,6 +424,7 @@ export default function App() {
       }}
       onHoverFeature={setHoveredId}
       onUpdateFeature={updateFeature}
+      onUpdateRouteGraph={updateRouteGraph}
       onQueryChange={setQuery}
       onHighlight={setHighlightId}
       onAddPoi={addPoi}

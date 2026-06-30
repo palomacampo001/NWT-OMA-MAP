@@ -8,6 +8,7 @@ import RoutePanel from './RoutePanel.jsx';
 import SearchPanel from './SearchPanel.jsx';
 import SvgUploader from './SvgUploader.jsx';
 import NavigationDrawer from './NavigationDrawer.jsx';
+import RouteGraphEditor from './RouteGraphEditor.jsx';
 
 export default function AppShell({
   mapData,
@@ -24,6 +25,7 @@ export default function AppShell({
   userLocation,
   locationState,
   startAnchor,
+  routeGraphs,
   activeRoute,
   routeDestinationId,
   buildingId,
@@ -34,6 +36,7 @@ export default function AppShell({
   onSelectFeature,
   onHoverFeature,
   onUpdateFeature,
+  onUpdateRouteGraph,
   onQueryChange,
   onHighlight,
   onAddPoi,
@@ -134,6 +137,7 @@ export default function AppShell({
                   </div>
                 </section>
               )}
+              {adminMode && <RouteGraphEditor floor={activeFloor} graph={routeGraphs?.[activeFloorId]} onUpdateGraph={(updater) => onUpdateRouteGraph(activeFloorId, updater)} />}
               {adminMode && <ExportPanel mapData={mapData} buildingId={buildingId} />}
             </>
           )}
@@ -151,6 +155,7 @@ export default function AppShell({
               userLocation={userLocation}
               locationState={locationState}
               startAnchor={startAnchor}
+              routeGraph={routeGraphs?.[activeFloorId]}
               activeRoute={activeRoute}
               adminMode={adminMode}
               onSelectFeature={(feature) => onSelectFeature(feature, activeFloor?.id)}
