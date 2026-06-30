@@ -790,9 +790,33 @@ export default function IndoorMapViewer({
     setLayerOptions((current) => ({ ...current, [key]: !current[key] }));
   }
 
+  function captureAreaPoint(event) {
+    const map = mapRef.current;
+    const host = hostRef.current;
+    if (!map || !host) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const rect = host.getBoundingClientRect();
+    const containerPoint = L.point(event.clientX - rect.left, event.clientY - rect.top);
+    const latlng = map.containerPointToLatLng(containerPoint);
+    onAddAreaPoint?.({ x: latlng.lng, y: latlng.lat });
+  }
+
   return (
     <div className={['map-viewer leaflet-viewer', addPoiMode || locatingMode ? 'adding-poi' : '', floorTransitioning ? 'floor-layer-enter' : ''].filter(Boolean).join(' ')}>
       <div className="leaflet-map-host" ref={hostRef} />
+      {adminMode && areaDrawingMode && (
+        <button
+          type="button"
+          className="area-click-capture"
+          onPointerDown={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+          }}
+          onClick={captureAreaPoint}
+          aria-label="Place area boundary point"
+        />
+      )}
       {(floor?.svgBackground || floor?.svgBackgroundUrl) && visualFeatures.length === 0 && (
         <div className="safe-mode-message">
           No reliable interactive rooms detected yet. Use review mode or manual POI/room tools.
