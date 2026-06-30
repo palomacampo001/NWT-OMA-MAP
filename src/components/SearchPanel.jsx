@@ -7,7 +7,25 @@ function matchFeature(feature, query) {
   return target.includes(query.toLowerCase());
 }
 
-export default function SearchPanel({ floors, query, onQueryChange, onSelectFeature, onHighlight, onRouteTo, onClearRoute, activeRoute }) {
+const connectorOptions = [
+  { value: 'any', label: 'Best' },
+  { value: 'elevator', label: 'Elevator' },
+  { value: 'escalator', label: 'Escalator' },
+  { value: 'stairs', label: 'Stairs' },
+];
+
+export default function SearchPanel({
+  floors,
+  query,
+  onQueryChange,
+  onSelectFeature,
+  onHighlight,
+  onRouteTo,
+  onClearRoute,
+  activeRoute,
+  connectorPreference = 'any',
+  onConnectorPreferenceChange,
+}) {
   const [focused, setFocused] = useState(false);
   const [chosen, setChosen] = useState(null);
   const [editing, setEditing] = useState(true);
@@ -106,6 +124,18 @@ export default function SearchPanel({ floors, query, onQueryChange, onSelectFeat
             ))}
           </div>
         )}
+      </div>
+      <div className="connector-choice" aria-label="Route connector preference">
+        {connectorOptions.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            className={connectorPreference === option.value ? 'active' : ''}
+            onClick={() => onConnectorPreferenceChange?.(option.value)}
+          >
+            {option.label}
+          </button>
+        ))}
       </div>
     </section>
   );

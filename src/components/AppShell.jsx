@@ -1,4 +1,5 @@
-import { Crosshair, Download, Eraser, Map, Pentagon, Plus, RotateCcw, Settings, Upload } from 'lucide-react';
+import { Crosshair, Download, Eraser, Pentagon, Plus, RotateCcw, Settings, Upload } from 'lucide-react';
+import BrandMark from './BrandMark.jsx';
 import EmptyState from './EmptyState.jsx';
 import ExportPanel from './ExportPanel.jsx';
 import FeatureInspector from './FeatureInspector.jsx';
@@ -30,6 +31,7 @@ export default function AppShell({
   startAnchor,
   routeGraphs,
   activeRoute,
+  connectorPreference,
   routeDestinationId,
   buildingId,
   adminMode,
@@ -56,6 +58,7 @@ export default function AppShell({
   onSetLocation,
   onToggleLocate,
   onRouteTo,
+  onConnectorPreferenceChange,
   onClearRoute,
   onToggleAdmin,
   onPublish,
@@ -72,10 +75,10 @@ export default function AppShell({
     <div className={`app-shell ${activeRoute ? 'route-active' : ''} ${adminMode ? 'admin-mode' : 'public-mode'}`}>
       <header className="topbar">
         <div className="brand">
-          <Map size={24} />
+          <BrandMark />
           <div>
-            <h1>SVG Indoor Map Converter</h1>
-            <span>Upload SVG floorplans. Convert, correct, and export structured indoor maps.</span>
+            <h1>No Wrong Turns</h1>
+            <span>Indoor routing for IBM spaces.</span>
           </div>
         </div>
         <div className="topbar-actions">
@@ -121,6 +124,8 @@ export default function AppShell({
                 onSelectFeature={onSelectFeature}
                 onHighlight={onHighlight}
                 onRouteTo={onRouteTo}
+                connectorPreference={connectorPreference}
+                onConnectorPreferenceChange={onConnectorPreferenceChange}
                 onClearRoute={onClearRoute}
                 activeRoute={activeRoute}
               />
@@ -166,6 +171,18 @@ export default function AppShell({
                   </div>
                 </section>
               )}
+              {adminMode && selectedFeature && (
+                <div className="mobile-admin-inspector">
+                  <FeatureInspector
+                    feature={selectedFeature}
+                    floor={activeFloor}
+                    selectedVertexIndex={selectedVertexIndex}
+                    onUpdateFeature={onUpdateFeature}
+                    onDeleteAreaVertex={onDeleteAreaVertex}
+                    onDeleteFeature={onDeleteFeature}
+                  />
+                </div>
+              )}
               {adminMode && <RouteGraphEditor floor={activeFloor} graph={routeGraphs?.[activeFloorId]} onUpdateGraph={(updater) => onUpdateRouteGraph(activeFloorId, updater)} />}
               {adminMode && <ExportPanel mapData={mapData} buildingId={buildingId} />}
             </>
@@ -203,7 +220,7 @@ export default function AppShell({
             <EmptyState onUpload={onUpload} onLoadSample={onLoadSample} />
           ) : (
             <div className="public-empty-state">
-              <Map size={34} />
+              <BrandMark />
               <h2>No published map yet</h2>
               <p>Ask the admin to upload SVG floors, review the conversion, and press Publish map.</p>
             </div>

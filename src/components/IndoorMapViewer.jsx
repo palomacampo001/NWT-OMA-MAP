@@ -419,8 +419,12 @@ export default function IndoorMapViewer({
     const fittedZoom = map.getBoundsZoom(bounds, false, [32, 32]);
     setBaseZoom(fittedZoom);
     if (startAnchor?.floorId === floor.id && !selectedId && !activeRoute) {
-      const zoomBoost = window.innerWidth < 768 ? 1.35 : 0.8;
+      const isMobile = window.innerWidth < 768;
+      const zoomBoost = isMobile ? 2.35 : 1.05;
       map.setView(pointLatLng(startAnchor.mapPoint), Math.min(fittedZoom + zoomBoost, map.getMaxZoom()), { animate: false });
+      if (isMobile) {
+        window.setTimeout(() => map.panBy([0, 72], { animate: false }), 0);
+      }
     } else {
       focusInitialMobileFloor(map, bounds);
     }

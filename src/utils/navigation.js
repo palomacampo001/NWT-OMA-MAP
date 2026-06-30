@@ -284,7 +284,7 @@ function approximateLeg({ id, floor, from, to, destinationName, instruction, con
   };
 }
 
-function bestConnectorPair({ floors, originFloorId, destinationFloorId, originPoint, destinationPoint }) {
+function bestConnectorPair({ floors, originFloorId, destinationFloorId, originPoint, destinationPoint, connectorPreference = 'any' }) {
   const originFloor = floors.find((floor) => floor.id === originFloorId);
   const destinationFloor = floors.find((floor) => floor.id === destinationFloorId);
   const originConnectors = verticalConnectorCandidates(originFloor);
@@ -300,10 +300,11 @@ function bestConnectorPair({ floors, originFloorId, destinationFloorId, originPo
       pairs.push({ origin, destination, score: keyBonus + typeBonus + layoutDistance + accessDistance * 0.08 });
     });
   });
-  return pairs.sort((a, b) => a.score - b.score)[0] || null;
+  const preferredPairs = connectorPreference === 'any' ? pairs : pairs.filter((pair) => pair.origin.type === connectorPreference);
+  return (preferredPairs.length ? preferredPairs : pairs).sort((a, b) => a.score - b.score)[0] || null;
 }
 
-export function planIndoorRoute({ floors, originFloorId, originPoint, destinationFloorId, destinationFeature, routeGraphs = {} }) {
+export function planIndoorRoute({ floors, originFloorId, originPoint, destinationFloorId, destinationFeature, routeGraphs = {}, connectorPreference = 'any' }) {
   const originFloor = floors.find((floor) => floor.id === originFloorId);
   const destinationFloor = floors.find((floor) => floor.id === destinationFloorId);
   const destinationPoint = featureCenter(destinationFeature);
@@ -350,7 +351,7 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
     };
   }
 
-  const pair = bestConnectorPair({ floors, originFloorId, destinationFloorId, originPoint, destinationPoint });
+  const pair = bestConnectorPair({ floors, originFloorId, destinationFloorId, originPoint, destinationPoint, connectorPreference });
   if (!pair) {
     return {
       floorId: originFloorId,
@@ -362,9 +363,9 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
       routeAvailable: false,
       quality: 'unavailable',
       mode: 'unavailable',
-      unavailableReason: 'No elevator or stair connector was found between these floors.',
+      unavailableReason: 'No elevator, escalator, or stair connector was found between these floors.',
       activeFloorIds: [originFloorId, destinationFloorId],
-      instructions: [{ id: 'no-connector', text: 'No elevator or stair connector was found between these floors.', distance: 0, direction: 'unavailable' }],
+      instructions: [{ id: 'no-connector', text: 'No elevator, escalator, or stair connector was found between these floors.', distance: 0, direction: 'unavailable' }],
     };
   }
 

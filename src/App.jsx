@@ -89,6 +89,7 @@ export default function App() {
   const [published, setPublished] = useState(() => Boolean(savedState?.floors?.length));
   const [buildingId, setBuildingId] = useState(savedState?.building?.id || '');
   const [routeGraphs, setRouteGraphs] = useState({});
+  const [connectorPreference, setConnectorPreference] = useState('any');
   const [areaDrawingMode, setAreaDrawingMode] = useState(false);
   const [areaDraftPoints, setAreaDraftPoints] = useState([]);
   const [selectedVertexIndex, setSelectedVertexIndex] = useState(null);
@@ -225,8 +226,9 @@ export default function App() {
       destinationFloorId: routeDestinationFloor.id,
       destinationFeature: routeDestination,
       routeGraphs,
+      connectorPreference,
     });
-  }, [mapData.floors, userLocation, routeDestination, routeDestinationFloor, routeGraphs]);
+  }, [mapData.floors, userLocation, routeDestination, routeDestinationFloor, routeGraphs, connectorPreference]);
 
   function updateFloor(floorId, updater) {
     setMapData((current) => ({
@@ -607,6 +609,7 @@ export default function App() {
       startAnchor={getDefaultStartAnchor(mapData.floors)}
       routeGraphs={routeGraphs}
       activeRoute={activeRoute}
+      connectorPreference={connectorPreference}
       routeDestinationId={routeDestinationId}
       buildingId={buildingId}
       adminMode={adminMode}
@@ -642,6 +645,7 @@ export default function App() {
         setLocatingMode((value) => !value);
       }}
       onRouteTo={startRouteTo}
+      onConnectorPreferenceChange={setConnectorPreference}
       onClearRoute={() => setRouteDestinationId('')}
       onToggleAdmin={() => setAdminMode((value) => !value)}
       onPublish={publishMap}

@@ -80,9 +80,11 @@ p {
   min-width: 0;
 }
 
-.brand svg {
-  color: #1967d2;
+.brand-mark {
+  width: 40px;
+  height: 40px;
   flex: 0 0 auto;
+  filter: drop-shadow(0 3px 8px rgba(15, 98, 254, 0.22));
 }
 
 .brand h1 {
@@ -260,6 +262,29 @@ p {
 
 .danger {
   color: #9b2c2c;
+}
+
+.connector-choice {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.connector-choice button {
+  min-height: 32px;
+  border: 1px solid #cfd7d3;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #334047;
+  font-size: 12px;
+  padding: 5px 6px;
+}
+
+.connector-choice button.active {
+  border-color: #0f62fe;
+  background: #edf5ff;
+  color: #0f62fe;
+  font-weight: 750;
 }
 
 .area-drawing-panel {
@@ -833,6 +858,10 @@ p {
   align-content: start;
 }
 
+.mobile-admin-inspector {
+  display: none;
+}
+
 .inspector-head {
   display: flex;
   justify-content: space-between;
@@ -881,6 +910,10 @@ p {
 
   .right-panel {
     display: none;
+  }
+
+  .admin-mode .mobile-admin-inspector {
+    display: block;
   }
 
   .public-mode .topbar {
