@@ -883,6 +883,26 @@ p {
   color: #8a4b12;
 }
 
+.inspector-save-state {
+  min-height: 32px;
+  border: 1px solid #cce8d8;
+  border-radius: 8px;
+  background: #f0f8f4;
+  color: #0f5132;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.inspector-save-state.saving {
+  border-color: #c9dcff;
+  background: #f2f7ff;
+  color: #0f62fe;
+}
+
 .inspector label {
   display: grid;
   gap: 6px;

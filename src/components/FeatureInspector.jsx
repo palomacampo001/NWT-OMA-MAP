@@ -1,4 +1,5 @@
-import { Eye, EyeOff, Trash2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { CheckCircle2, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { categories } from '../utils/classifyFeatures.js';
 
 const types = ['room', 'corridor', 'poi', 'custom_area', 'decorative'];
@@ -29,6 +30,14 @@ function getFeatureTitle(feature) {
 }
 
 export default function FeatureInspector({ feature, floor, selectedVertexIndex, onUpdateFeature, onDeleteAreaVertex, onDeleteFeature }) {
+  const [saveState, setSaveState] = useState('saved');
+  const saveTimerRef = useRef(null);
+
+  useEffect(() => {
+    setSaveState('saved');
+    return () => window.clearTimeout(saveTimerRef.current);
+  }, [feature?.id]);
+
   if (!feature) {
     return (
       <section className="inspector empty-inspector">
@@ -39,7 +48,10 @@ export default function FeatureInspector({ feature, floor, selectedVertexIndex, 
   }
 
   function patch(update) {
+    setSaveState('saving');
     onUpdateFeature(feature.id, update);
+    window.clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = window.setTimeout(() => setSaveState('saved'), 350);
   }
 
   const title = getFeatureTitle(feature);
@@ -61,6 +73,10 @@ export default function FeatureInspector({ feature, floor, selectedVertexIndex, 
         <span className={feature.confidence < 0.5 ? 'confidence low' : 'confidence'}>
           {Math.round(feature.confidence * 100)}%
         </span>
+      </div>
+      <div className={saveState === 'saving' ? 'inspector-save-state saving' : 'inspector-save-state'}>
+        <CheckCircle2 size={15} />
+        <span>{saveState === 'saving' ? 'Saving changes…' : 'Saved automatically'}</span>
       </div>
 
       {feature.confidence < 0.5 && <p className="warning">Low-confidence detection. Review this item before export.</p>}

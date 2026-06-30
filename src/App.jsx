@@ -362,7 +362,26 @@ export default function App() {
     };
     updateFloor(activeFloor.id, (floor) => ({ ...floor, features: [...floor.features, feature] }));
     setSelectedId(id);
+    setHighlightId(id);
     setAddPoiMode(false);
+    setStatus({ type: 'success', message: 'Saved New POI. Rename it in the inspector.' });
+    createFeatureApi({
+      id: feature.id,
+      buildingId,
+      floorId: activeFloor.id,
+      sourceSvgId: null,
+      type: feature.type,
+      category: feature.category,
+      name: feature.name,
+      displayName: feature.displayName,
+      roomNumber: feature.roomNumber,
+      geometryJson: JSON.stringify(feature.geometry),
+      bboxJson: JSON.stringify(feature.bbox),
+      confidence: feature.confidence,
+      visible: true,
+      isDeleted: false,
+      sourceMetadataJson: JSON.stringify({ source: 'admin-added-poi', editable: true, manualApproved: true }),
+    }).catch(() => {});
   }
 
   function startAreaDrawing() {
