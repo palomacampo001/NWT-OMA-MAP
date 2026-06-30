@@ -49,8 +49,10 @@ export function entranceAnchorForFloor(floor) {
   if (!floor) return null;
   const explicit = BUILDING_START_ANCHORS.find((anchor) => anchor.floorId === floor.id && anchor.isDefault)
     || BUILDING_START_ANCHORS.find((anchor) => anchor.floorId === floor.id);
-  const preferred = floor.features?.find((feature) => feature.visible !== false && ['entrance', 'reception'].includes(feature.category) && feature.geometry?.type === 'Point')
-    || floor.features?.find((feature) => feature.visible !== false && feature.geometry?.type === 'Point' && /entrance|vestibule|lobby|reception|01A23/i.test(`${feature.displayName || ''} ${feature.name || ''} ${feature.roomNumber || ''}`));
+  const preferred = floor.features?.find((feature) => feature.visible !== false && feature.isDefaultStart && feature.geometry?.type === 'Point')
+    || floor.features?.find((feature) => feature.visible !== false && feature.id === 'poi-main-ibm-entrance' && feature.geometry?.type === 'Point')
+    || floor.features?.find((feature) => feature.visible !== false && ['entrance', 'reception'].includes(feature.category) && feature.geometry?.type === 'Point')
+    || floor.features?.find((feature) => feature.visible !== false && feature.geometry?.type === 'Point' && /main ibm entrance|entrance|vestibule|lobby|reception|01A23/i.test(`${feature.displayName || ''} ${feature.name || ''} ${feature.roomNumber || ''}`));
   if (preferred) {
     return {
       id: preferred.id,

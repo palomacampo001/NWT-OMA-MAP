@@ -29,6 +29,14 @@ function floorName(index) {
   return `Floor ${index + 1}`;
 }
 
+function defaultStartAreaId(floors = []) {
+  const floor = floors.find((item) => item.id === 'floor-us-oma-01') || floors[0];
+  const feature = floor?.features?.find((item) => item.visible !== false && item.isDefaultStartArea)
+    || floor?.features?.find((item) => item.visible !== false && item.id === 'space-main-ibm-entrance-lobby')
+    || floor?.features?.find((item) => item.visible !== false && item.isDefaultStart);
+  return feature?.id || '';
+}
+
 export default function App() {
   const savedState = loadMapState();
   const isAdminUrl = new URLSearchParams(window.location.search).get('admin') === '1';
@@ -66,6 +74,7 @@ export default function App() {
         if (!publishedMap?.floors?.length) return;
         setMapData(publishedMap);
         setActiveFloorId(publishedMap.floors[0]?.id || '');
+        setHighlightId(defaultStartAreaId(publishedMap.floors));
         setBuildingId(publishedMap.building?.id || '');
         setPublished(true);
         setAdminMode(isAdminUrl);
@@ -74,6 +83,7 @@ export default function App() {
         if (!savedState?.floors?.length && sampleMap?.floors?.length) {
           setMapData(sampleMap);
           setActiveFloorId(sampleMap.floors[0]?.id || '');
+          setHighlightId(defaultStartAreaId(sampleMap.floors));
           setPublished(true);
         }
       });

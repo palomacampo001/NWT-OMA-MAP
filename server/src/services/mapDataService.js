@@ -10,12 +10,41 @@ function parseJson(value, fallback) {
 
 function compactSourceMetadata(value) {
   const metadata = parseJson(value, {});
-  const { id, class: className, fill, stroke, tag, d, points, width, height, preparedPackage, manualApproved, manual } = metadata;
+  const {
+    id,
+    class: className,
+    fill,
+    stroke,
+    tag,
+    d,
+    points,
+    width,
+    height,
+    preparedPackage,
+    manualApproved,
+    manual,
+    isDefaultStart,
+    isDefaultStartArea,
+    startPriority,
+    originalType,
+  } = metadata;
   let inferredTag = tag;
   if (!inferredTag && d) inferredTag = 'path';
   if (!inferredTag && points) inferredTag = 'polygon';
   if (!inferredTag && width !== undefined && height !== undefined) inferredTag = 'rect';
-  return { id, class: className, fill, stroke, tag: inferredTag, preparedPackage, manualApproved: manualApproved || manual };
+  return {
+    id,
+    class: className,
+    fill,
+    stroke,
+    tag: inferredTag,
+    preparedPackage,
+    manualApproved: manualApproved || manual,
+    isDefaultStart,
+    isDefaultStartArea,
+    startPriority,
+    originalType,
+  };
 }
 
 function hasUsefulLabel(feature) {
@@ -88,6 +117,8 @@ function featureDto(feature) {
     geometry: parseJson(feature.geometryJson, null),
     bbox: parseJson(feature.bboxJson, [0, 0, 0, 0]),
     sourceSvg: compactSourceMetadata(feature.sourceMetadataJson),
+    isDefaultStart: Boolean(compactSourceMetadata(feature.sourceMetadataJson).isDefaultStart),
+    isDefaultStartArea: Boolean(compactSourceMetadata(feature.sourceMetadataJson).isDefaultStartArea),
   };
 }
 
