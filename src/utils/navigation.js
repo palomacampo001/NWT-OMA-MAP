@@ -44,6 +44,11 @@ function connectorTypeLabel(type) {
   return 'stairs';
 }
 
+function connectorPreferenceLabel(type) {
+  if (type === 'any') return 'elevator, escalator, or stair';
+  return connectorTypeLabel(type);
+}
+
 function verticalConnectorCandidates(floor) {
   return (floor?.features || [])
     .filter((feature) => feature.visible !== false && connectorType(feature))
@@ -301,7 +306,7 @@ function bestConnectorPair({ floors, originFloorId, destinationFloorId, originPo
     });
   });
   const preferredPairs = connectorPreference === 'any' ? pairs : pairs.filter((pair) => pair.origin.type === connectorPreference);
-  return (preferredPairs.length ? preferredPairs : pairs).sort((a, b) => a.score - b.score)[0] || null;
+  return preferredPairs.sort((a, b) => a.score - b.score)[0] || null;
 }
 
 export function planIndoorRoute({ floors, originFloorId, originPoint, destinationFloorId, destinationFeature, routeGraphs = {}, connectorPreference = 'any' }) {
@@ -353,6 +358,10 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
 
   const pair = bestConnectorPair({ floors, originFloorId, destinationFloorId, originPoint, destinationPoint, connectorPreference });
   if (!pair) {
+    const requestedConnector = connectorPreferenceLabel(connectorPreference);
+    const reason = connectorPreference === 'any'
+      ? 'No elevator, escalator, or stair connector was found between these floors.'
+      : `No ${requestedConnector} connector was found between these floors. Choose another route option or add matching ${requestedConnector} points on both floors.`;
     return {
       floorId: originFloorId,
       destinationId: destinationFeature.id,
@@ -363,9 +372,9 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
       routeAvailable: false,
       quality: 'unavailable',
       mode: 'unavailable',
-      unavailableReason: 'No elevator, escalator, or stair connector was found between these floors.',
+      unavailableReason: reason,
       activeFloorIds: [originFloorId, destinationFloorId],
-      instructions: [{ id: 'no-connector', text: 'No elevator, escalator, or stair connector was found between these floors.', distance: 0, direction: 'unavailable' }],
+      instructions: [{ id: 'no-connector', text: reason, distance: 0, direction: 'unavailable' }],
     };
   }
 
