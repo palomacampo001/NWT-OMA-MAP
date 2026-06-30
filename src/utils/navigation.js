@@ -202,19 +202,21 @@ function findConnectorGraphNode(connector, graph) {
   return nearestGraphNode(connector.point, graph, new Set([type])) || nearestGraphNode(connector.point, graph);
 }
 
-function unavailableRoute({ floorId, destinationId, destinationName, activeFloorIds, reason }) {
+function unavailableRoute({ floorId, destinationId, destinationName, activeFloorIds, reason, legs = [] }) {
+  const firstLeg = legs.find((leg) => leg.type === 'walk' && leg.points?.length > 1);
   return {
     floorId,
     destinationId,
     destinationName,
-    points: [],
-    heading: 0,
-    distance: 0,
+    points: firstLeg?.points || [],
+    heading: firstLeg?.heading || 0,
+    distance: legs.reduce((sum, leg) => sum + (leg.distance || 0), 0),
     routeAvailable: false,
-    quality: 'unavailable',
-    mode: 'unavailable',
+    quality: legs.length ? 'previewGuidance' : 'unavailable',
+    mode: legs.length ? 'preview-guidance' : 'unavailable',
     unavailableReason: reason,
     activeFloorIds,
+    legs,
     instructions: [{ id: 'route-graph-needed', text: reason, distance: 0, direction: 'unavailable' }],
   };
 }
@@ -365,6 +367,21 @@ function approximateLeg({ id, floor, from, to, destinationName, instruction, con
   };
 }
 
+function previewLeg(args) {
+  const leg = approximateLeg(args);
+  return {
+    ...leg,
+    routeAvailable: false,
+    quality: leg.points?.length > 1 ? 'previewGuidance' : 'unavailable',
+    mode: leg.points?.length > 1 ? 'preview-guidance' : 'unavailable',
+    instructions: [{
+      ...(leg.instructions?.[0] || {}),
+      text: args.instruction || 'Preview guidance shown. Add hallway graph nodes for a confirmed walkable route.',
+      direction: 'preview',
+    }],
+  };
+}
+
 function bestConnectorPair({ floors, originFloorId, destinationFloorId, originPoint, destinationPoint, connectorPreference = 'any' }) {
   const originFloor = floors.find((floor) => floor.id === originFloorId);
   const destinationFloor = floors.find((floor) => floor.id === destinationFloorId);
@@ -405,12 +422,21 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
       instruction: `Continue to ${destinationName}.`,
     });
     if (!graphRoute) {
+      const leg = previewLeg({
+        id: 'leg-same-floor-preview',
+        floor: originFloor,
+        from: originPoint,
+        to: destinationPoint,
+        destinationName,
+        instruction: `Preview guidance shown to ${destinationName}. Add hallway graph nodes for a confirmed walkable route.`,
+      });
       return unavailableRoute({
         floorId: originFloorId,
         destinationId: destinationFeature.id,
         destinationName,
         activeFloorIds: [originFloorId],
         reason: 'Hallway route graph needed for this area. Add connected route nodes in Admin.',
+        legs: [leg],
       });
     }
     const leg = graphRoute;
@@ -483,6 +509,41 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
     instruction: `From ${connectorTypeLabel(pair.destination.type)} ${pair.destination.name}, follow the highlighted route to ${destinationName}.`,
   });
   if (!originLeg || !destinationLeg) {
+    const previewOriginLeg = originLeg || previewLeg({
+      id: 'leg-to-connector-preview',
+      floor: originFloor,
+      from: originPoint,
+      to: pair.origin.point,
+      destinationName: pair.origin.name,
+      connector: pair.origin,
+      instruction: `Preview guidance to ${connectorTypeLabel(pair.origin.type)} ${pair.origin.name}. Add hallway graph nodes for a confirmed route.`,
+    });
+    const previewDestinationLeg = destinationLeg || previewLeg({
+      id: 'leg-from-connector-preview',
+      floor: destinationFloor,
+      from: pair.destination.point,
+      to: destinationPoint,
+      destinationName,
+      connector: pair.destination,
+      instruction: `Preview guidance from ${connectorTypeLabel(pair.destination.type)} ${pair.destination.name} to ${destinationName}. Add hallway graph nodes for a confirmed route.`,
+    });
+    const previewTransfer = {
+      id: 'vertical-transfer-preview',
+      type: 'transfer',
+      connectorType: pair.origin.type,
+      fromFloorId: originFloorId,
+      toFloorId: destinationFloorId,
+      fromFloorName: floorLabel(originFloor),
+      toFloorName: floorLabel(destinationFloor),
+      from: pair.origin,
+      to: pair.destination,
+      instructions: [{
+        id: 'transfer-step-preview',
+        text: `Take the ${connectorTypeLabel(pair.origin.type)} to ${floorLabel(destinationFloor)}.`,
+        distance: 0,
+        direction: 'transfer',
+      }],
+    };
     const missing = !originLeg && !destinationLeg
       ? `${floorLabel(originFloor)} and ${floorLabel(destinationFloor)}`
       : !originLeg
@@ -494,6 +555,7 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
       destinationName,
       activeFloorIds: [originFloorId, destinationFloorId],
       reason: `Hallway route graph needed for ${missing}. Add connected route nodes in Admin before routing through walls is allowed.`,
+      legs: [previewOriginLeg, previewTransfer, previewDestinationLeg],
     });
   }
   const transfer = {

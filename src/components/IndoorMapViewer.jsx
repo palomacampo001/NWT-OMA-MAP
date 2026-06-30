@@ -267,7 +267,7 @@ function editableRing(feature) {
 }
 
 function canDrawRouteLine(leg) {
-  return leg?.quality === 'manualGraph' && leg?.points?.length > 1;
+  return ['manualGraph', 'previewGuidance'].includes(leg?.quality) && leg?.points?.length > 1;
 }
 
 export default function IndoorMapViewer({
@@ -612,7 +612,7 @@ export default function IndoorMapViewer({
     group.clearLayers();
     if (canDrawRouteLine(activeFloorLeg)) {
       const routeLatLngs = activeFloorLeg.points.map(pointLatLng);
-      const approximate = activeFloorLeg.quality === 'approximateGuidance';
+      const approximate = ['approximateGuidance', 'previewGuidance'].includes(activeFloorLeg.quality);
       const halo = L.polyline(routeLatLngs, {
         pane: 'routeHaloPane',
         color: '#ffffff',
@@ -625,12 +625,12 @@ export default function IndoorMapViewer({
       const line = L.polyline(routeLatLngs, {
         pane: 'routePane',
         color: '#0f62fe',
-        weight: 7,
+        weight: approximate ? 6 : 7,
         opacity: 1,
         lineCap: 'round',
         lineJoin: 'round',
-        dashArray: approximate ? '14 12' : null,
-        className: approximate ? 'route-line-approximate' : 'route-line-real',
+        dashArray: approximate ? '12 12' : null,
+        className: approximate ? 'route-line-approximate route-line-preview' : 'route-line-real',
       }).addTo(group);
       const flow = !approximate
         ? L.polyline(routeLatLngs, { pane: 'routePane', color: '#93c5fd', weight: 3, opacity: 0.78, lineCap: 'round', lineJoin: 'round', dashArray: '12 18', className: 'route-line-flow-highlight' }).addTo(group)
