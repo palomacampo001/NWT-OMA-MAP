@@ -27,6 +27,8 @@ function compactSourceMetadata(value) {
     isDefaultStartArea,
     startPriority,
     originalType,
+    source,
+    editable,
   } = metadata;
   let inferredTag = tag;
   if (!inferredTag && d) inferredTag = 'path';
@@ -44,6 +46,8 @@ function compactSourceMetadata(value) {
     isDefaultStartArea,
     startPriority,
     originalType,
+    source,
+    editable,
   };
 }
 
@@ -60,7 +64,7 @@ function hasUsefulLabel(feature) {
 
 function shouldSendFeature(feature, floor) {
   if (feature.isDeleted || feature.visible === false || feature.category === 'decorative') return false;
-  if (!['room', 'poi'].includes(feature.type)) return false;
+  if (!['room', 'poi', 'custom_area'].includes(feature.type)) return false;
   if (feature.category === 'corridor' || feature.category === 'unknown' || feature.category === 'noise') return false;
   if (feature.confidence < 0.75) return false;
   const bbox = parseJson(feature.bboxJson, [0, 0, 0, 0]);
@@ -68,6 +72,7 @@ function shouldSendFeature(feature, floor) {
   const source = compactSourceMetadata(feature.sourceMetadataJson);
   if (geometry.type === 'LineString') return false;
   if (geometry.type !== 'Polygon' && geometry.type !== 'Point') return false;
+  if (feature.type === 'custom_area') return true;
   if ((source.preparedPackage || source.manualApproved) && ['room', 'poi'].includes(feature.type)) return true;
   if (geometry.type === 'Polygon' && !['rect', 'polygon'].includes(source.tag)) return false;
   const viewBox = parseJson(floor.viewBox, [0, 0, floor.width || 1200, floor.height || 800]);
@@ -105,6 +110,7 @@ function reviewStats(floor) {
 }
 
 function featureDto(feature) {
+  const sourceSvg = compactSourceMetadata(feature.sourceMetadataJson);
   return {
     id: feature.id,
     type: feature.type,
@@ -116,9 +122,11 @@ function featureDto(feature) {
     visible: feature.visible,
     geometry: parseJson(feature.geometryJson, null),
     bbox: parseJson(feature.bboxJson, [0, 0, 0, 0]),
-    sourceSvg: compactSourceMetadata(feature.sourceMetadataJson),
-    isDefaultStart: Boolean(compactSourceMetadata(feature.sourceMetadataJson).isDefaultStart),
-    isDefaultStartArea: Boolean(compactSourceMetadata(feature.sourceMetadataJson).isDefaultStartArea),
+    sourceSvg,
+    source: sourceSvg.source,
+    editable: Boolean(sourceSvg.editable),
+    isDefaultStart: Boolean(sourceSvg.isDefaultStart),
+    isDefaultStartArea: Boolean(sourceSvg.isDefaultStartArea),
   };
 }
 
@@ -193,9 +201,12 @@ function toGeoJson(mapJson, floorFilter = null) {
             type: feature.type,
             category: feature.category,
             floor: floor.id,
+            floorId: floor.id,
             floorName: floor.name,
             roomNumber: feature.roomNumber,
             confidence: feature.confidence,
+            source: feature.source || feature.sourceSvg?.source,
+            visible: feature.visible,
           },
           geometry: feature.geometry,
         }))),

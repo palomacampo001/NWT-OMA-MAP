@@ -1,4 +1,4 @@
-import { Crosshair, Download, Eraser, Map, Plus, RotateCcw, Settings, Upload } from 'lucide-react';
+import { Crosshair, Download, Eraser, Map, Pentagon, Plus, RotateCcw, Settings, Upload } from 'lucide-react';
 import EmptyState from './EmptyState.jsx';
 import ExportPanel from './ExportPanel.jsx';
 import FeatureInspector from './FeatureInspector.jsx';
@@ -21,6 +21,9 @@ export default function AppShell({
   query,
   status,
   addPoiMode,
+  areaDrawingMode,
+  areaDraftPoints,
+  selectedVertexIndex,
   locatingMode,
   userLocation,
   locationState,
@@ -36,6 +39,16 @@ export default function AppShell({
   onSelectFeature,
   onHoverFeature,
   onUpdateFeature,
+  onAddAreaPoint,
+  onStartAreaDrawing,
+  onFinishAreaDrawing,
+  onUndoAreaPoint,
+  onCancelAreaDrawing,
+  onUpdateAreaVertex,
+  onInsertAreaVertex,
+  onSelectAreaVertex,
+  onDeleteAreaVertex,
+  onDeleteFeature,
   onUpdateRouteGraph,
   onQueryChange,
   onHighlight,
@@ -116,6 +129,10 @@ export default function AppShell({
                   <Plus size={17} />
                   {addPoiMode ? 'Click map to place POI' : 'Add POI'}
                 </button>}
+                {adminMode && <button className={areaDrawingMode ? 'primary-button active' : 'secondary-button'} onClick={onStartAreaDrawing}>
+                  <Pentagon size={17} />
+                  {areaDrawingMode ? 'Drawing area' : 'Add Area'}
+                </button>}
                 <button className={locatingMode ? 'primary-button active' : 'secondary-button'} onClick={onToggleLocate}>
                   <Crosshair size={17} />
                   {locatingMode ? 'Click your position' : 'Locate me'}
@@ -124,6 +141,18 @@ export default function AppShell({
                 {adminMode && <button className="secondary-button danger" onClick={onCleanupAllFloors}>Clear corrupted features</button>}
                 {adminMode && <button className="secondary-button" onClick={onRestoreHidden}>Restore hidden</button>}
               </div>
+              {adminMode && areaDrawingMode && (
+                <section className="panel-section area-drawing-panel">
+                  <h2><Pentagon size={17} /> Area boundary</h2>
+                  <p className="muted">Click the map to add points. Finish when the boundary has at least 3 points.</p>
+                  <div className="area-drawing-actions">
+                    <button className="primary-button" onClick={onFinishAreaDrawing} disabled={(areaDraftPoints?.length || 0) < 3}>Finish area</button>
+                    <button className="secondary-button" onClick={onUndoAreaPoint} disabled={(areaDraftPoints?.length || 0) === 0}>Undo last point</button>
+                    <button className="secondary-button danger" onClick={onCancelAreaDrawing}>Cancel</button>
+                  </div>
+                  <small>{areaDraftPoints?.length || 0} points</small>
+                </section>
+              )}
               {adminMode && activeFloor?.reviewStats && (
                 <section className="panel-section review-panel">
                   <h2>Review</h2>
@@ -151,6 +180,9 @@ export default function AppShell({
               hoveredId={hoveredId}
               highlightId={highlightId}
               addPoiMode={addPoiMode}
+              areaDrawingMode={areaDrawingMode}
+              areaDraftPoints={areaDraftPoints}
+              selectedVertexIndex={selectedVertexIndex}
               locatingMode={locatingMode}
               userLocation={userLocation}
               locationState={locationState}
@@ -161,6 +193,10 @@ export default function AppShell({
               onSelectFeature={(feature) => onSelectFeature(feature, activeFloor?.id)}
               onHoverFeature={onHoverFeature}
               onAddPoi={onAddPoi}
+              onAddAreaPoint={onAddAreaPoint}
+              onUpdateAreaVertex={onUpdateAreaVertex}
+              onInsertAreaVertex={onInsertAreaVertex}
+              onSelectAreaVertex={onSelectAreaVertex}
               onSetLocation={onSetLocation}
             />
           ) : adminMode ? (
@@ -188,7 +224,14 @@ export default function AppShell({
         </section>
 
         <aside className="right-panel">
-          {adminMode ? <FeatureInspector feature={selectedFeature} floor={activeFloor} onUpdateFeature={onUpdateFeature} /> : <RoutePanel
+          {adminMode ? <FeatureInspector
+            feature={selectedFeature}
+            floor={activeFloor}
+            selectedVertexIndex={selectedVertexIndex}
+            onUpdateFeature={onUpdateFeature}
+            onDeleteAreaVertex={onDeleteAreaVertex}
+            onDeleteFeature={onDeleteFeature}
+          /> : <RoutePanel
             userLocation={userLocation}
             activeRoute={activeRoute}
             routeDestinationId={routeDestinationId}

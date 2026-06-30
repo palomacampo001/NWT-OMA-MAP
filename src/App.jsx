@@ -15,6 +15,8 @@ import {
   getPublishedMap,
   listBuildings,
   publishBuilding,
+  createFeature as createFeatureApi,
+  deleteFeature as deleteFeatureApi,
   updateFeature as updateFeatureApi,
   uploadSvgToFloor,
 } from './api/indoorMapApi.js';
@@ -37,6 +39,37 @@ function defaultStartAreaId(floors = []) {
   return feature?.id || '';
 }
 
+function closeRing(points) {
+  if (!points.length) return points;
+  const first = points[0];
+  const last = points[points.length - 1];
+  return first.x === last.x && first.y === last.y ? points : [...points, first];
+}
+
+function bboxFromMapPoints(points) {
+  if (!points.length) return [0, 0, 0, 0];
+  const xs = points.map((point) => point.x);
+  const ys = points.map((point) => point.y);
+  const minX = Math.min(...xs);
+  const minY = Math.min(...ys);
+  return [minX, minY, Math.max(...xs) - minX, Math.max(...ys) - minY];
+}
+
+function polygonArea(points) {
+  if (points.length < 3) return 0;
+  return Math.abs(points.reduce((sum, point, index) => {
+    const next = points[(index + 1) % points.length];
+    return sum + point.x * next.y - next.x * point.y;
+  }, 0) / 2);
+}
+
+function polygonGeometry(points) {
+  return {
+    type: 'Polygon',
+    coordinates: [closeRing(points).map((point) => [point.x, point.y])],
+  };
+}
+
 export default function App() {
   const savedState = loadMapState();
   const isAdminUrl = new URLSearchParams(window.location.search).get('admin') === '1';
@@ -56,6 +89,9 @@ export default function App() {
   const [published, setPublished] = useState(() => Boolean(savedState?.floors?.length));
   const [buildingId, setBuildingId] = useState(savedState?.building?.id || '');
   const [routeGraphs, setRouteGraphs] = useState({});
+  const [areaDrawingMode, setAreaDrawingMode] = useState(false);
+  const [areaDraftPoints, setAreaDraftPoints] = useState([]);
+  const [selectedVertexIndex, setSelectedVertexIndex] = useState(null);
 
   useEffect(() => {
     const load = isAdminUrl
@@ -269,6 +305,27 @@ export default function App() {
     updateFeatureApi(featureId, apiPatch).catch(() => {});
   }
 
+  function addFeatureToFloor(floorId, feature) {
+    setMapData((current) => ({
+      ...current,
+      floors: current.floors.map((floor) => (
+        floor.id === floorId
+          ? { ...floor, features: [...floor.features.filter((item) => item.id !== feature.id), feature] }
+          : floor
+      )),
+    }));
+  }
+
+  function removeFeatureFromFloor(featureId) {
+    setMapData((current) => ({
+      ...current,
+      floors: current.floors.map((floor) => ({
+        ...floor,
+        features: floor.features.filter((feature) => feature.id !== featureId),
+      })),
+    }));
+  }
+
   function addPoi(point) {
     if (!activeFloor) return;
     const id = `poi-${Date.now()}`;
@@ -293,6 +350,132 @@ export default function App() {
     updateFloor(activeFloor.id, (floor) => ({ ...floor, features: [...floor.features, feature] }));
     setSelectedId(id);
     setAddPoiMode(false);
+  }
+
+  function startAreaDrawing() {
+    setAreaDrawingMode((value) => !value);
+    setAreaDraftPoints([]);
+    setSelectedVertexIndex(null);
+    setAddPoiMode(false);
+    setLocatingMode(false);
+  }
+
+  function addAreaPoint(point) {
+    if (!areaDrawingMode) return;
+    setAreaDraftPoints((points) => [...points, point]);
+  }
+
+  function undoAreaPoint() {
+    setAreaDraftPoints((points) => points.slice(0, -1));
+  }
+
+  function cancelAreaDrawing() {
+    setAreaDrawingMode(false);
+    setAreaDraftPoints([]);
+    setSelectedVertexIndex(null);
+  }
+
+  async function finishAreaDrawing() {
+    if (!activeFloor) return;
+    if (areaDraftPoints.length < 3 || polygonArea(areaDraftPoints) < 25) {
+      setStatus({ type: 'error', message: 'Draw at least 3 points and make the area a little larger before saving.' });
+      return;
+    }
+    const name = window.prompt('Area name', 'New area');
+    if (!name?.trim()) {
+      setStatus({ type: 'error', message: 'Area needs a name before saving.' });
+      return;
+    }
+    const now = new Date().toISOString();
+    const geometry = polygonGeometry(areaDraftPoints);
+    const bbox = bboxFromMapPoints(areaDraftPoints);
+    const feature = {
+      id: `area-${Date.now()}`,
+      floorId: activeFloor.id,
+      type: 'custom_area',
+      category: 'custom',
+      name: name.trim(),
+      displayName: name.trim(),
+      visible: true,
+      editable: true,
+      source: 'admin-drawn',
+      confidence: 1,
+      geometry,
+      bbox,
+      createdAt: now,
+      updatedAt: now,
+      sourceSvg: { tag: 'polygon', source: 'admin-drawn', editable: true, manualApproved: true },
+    };
+    addFeatureToFloor(activeFloor.id, feature);
+    setSelectedId(feature.id);
+    setHighlightId(feature.id);
+    setAreaDrawingMode(false);
+    setAreaDraftPoints([]);
+    setSelectedVertexIndex(null);
+    setStatus({ type: 'success', message: `Saved ${feature.displayName}.` });
+    createFeatureApi({
+      id: feature.id,
+      buildingId,
+      floorId: activeFloor.id,
+      sourceSvgId: null,
+      type: feature.type,
+      category: feature.category,
+      name: feature.name,
+      displayName: feature.displayName,
+      roomNumber: '',
+      geometryJson: JSON.stringify(feature.geometry),
+      bboxJson: JSON.stringify(feature.bbox),
+      confidence: 1,
+      visible: true,
+      isDeleted: false,
+      sourceMetadataJson: JSON.stringify({ tag: 'polygon', source: 'admin-drawn', editable: true, manualApproved: true }),
+    }).catch(() => {});
+  }
+
+  function updateAreaGeometry(featureId, points) {
+    if (points.length < 3) return;
+    updateFeature(featureId, {
+      geometry: polygonGeometry(points),
+      bbox: bboxFromMapPoints(points),
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  function updateAreaVertex(feature, index, point) {
+    const ring = feature.geometry.coordinates?.[0]?.slice(0, -1).map(([x, y]) => ({ x, y })) || [];
+    if (!ring[index]) return;
+    ring[index] = point;
+    updateAreaGeometry(feature.id, ring);
+  }
+
+  function insertAreaVertex(feature, index, point) {
+    const ring = feature.geometry.coordinates?.[0]?.slice(0, -1).map(([x, y]) => ({ x, y })) || [];
+    ring.splice(index + 1, 0, point);
+    updateAreaGeometry(feature.id, ring);
+    setSelectedVertexIndex(index + 1);
+  }
+
+  function deleteSelectedAreaVertex() {
+    const feature = selectedFeature;
+    if (!feature || feature.type !== 'custom_area' || selectedVertexIndex == null) return;
+    const ring = feature.geometry.coordinates?.[0]?.slice(0, -1).map(([x, y]) => ({ x, y })) || [];
+    if (ring.length <= 3) {
+      setStatus({ type: 'error', message: 'An area needs at least 3 points.' });
+      return;
+    }
+    ring.splice(selectedVertexIndex, 1);
+    setSelectedVertexIndex(null);
+    updateAreaGeometry(feature.id, ring);
+  }
+
+  function deleteSelectedFeature() {
+    const feature = selectedFeature;
+    if (!feature) return;
+    removeFeatureFromFloor(feature.id);
+    setSelectedId('');
+    setHighlightId('');
+    setSelectedVertexIndex(null);
+    deleteFeatureApi(feature.id).catch(() => {});
   }
 
   function setLocation(point) {
@@ -415,6 +598,9 @@ export default function App() {
       query={query}
       status={status}
       addPoiMode={addPoiMode}
+      areaDrawingMode={areaDrawingMode}
+      areaDraftPoints={areaDraftPoints}
+      selectedVertexIndex={selectedVertexIndex}
       locatingMode={locatingMode}
       userLocation={userLocation}
       locationState={locationState}
@@ -434,6 +620,16 @@ export default function App() {
       }}
       onHoverFeature={setHoveredId}
       onUpdateFeature={updateFeature}
+      onAddAreaPoint={addAreaPoint}
+      onStartAreaDrawing={startAreaDrawing}
+      onFinishAreaDrawing={finishAreaDrawing}
+      onUndoAreaPoint={undoAreaPoint}
+      onCancelAreaDrawing={cancelAreaDrawing}
+      onUpdateAreaVertex={updateAreaVertex}
+      onInsertAreaVertex={insertAreaVertex}
+      onSelectAreaVertex={setSelectedVertexIndex}
+      onDeleteAreaVertex={deleteSelectedAreaVertex}
+      onDeleteFeature={deleteSelectedFeature}
       onUpdateRouteGraph={updateRouteGraph}
       onQueryChange={setQuery}
       onHighlight={setHighlightId}
@@ -441,6 +637,8 @@ export default function App() {
       onSetLocation={setLocation}
       onToggleLocate={() => {
         setAddPoiMode(false);
+        setAreaDrawingMode(false);
+        setAreaDraftPoints([]);
         setLocatingMode((value) => !value);
       }}
       onRouteTo={startRouteTo}
@@ -449,6 +647,8 @@ export default function App() {
       onPublish={publishMap}
       onToggleAddPoi={() => {
         setLocatingMode(false);
+        setAreaDrawingMode(false);
+        setAreaDraftPoints([]);
         setAddPoiMode((value) => !value);
       }}
       onRestoreHidden={restoreHidden}

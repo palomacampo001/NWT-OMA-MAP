@@ -3,6 +3,7 @@ const { prisma } = require('../db/prisma');
 
 const router = express.Router();
 
+router.post('/', async (req, res) => res.status(201).json(await prisma.mapFeature.create({ data: req.body })));
 router.patch('/:featureId', async (req, res) => res.json(await prisma.mapFeature.update({ where: { id: req.params.featureId }, data: req.body })));
 router.delete('/:featureId', async (req, res) => res.json(await prisma.mapFeature.update({ where: { id: req.params.featureId }, data: { isDeleted: true, visible: false } })));
 router.post('/:featureId/hide', async (req, res) => res.json(await prisma.mapFeature.update({ where: { id: req.params.featureId }, data: { visible: false } })));

@@ -248,12 +248,28 @@ p {
   border-color: #0f5132;
 }
 
+.primary-button:disabled,
+.secondary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
 .ghost-button {
   background: transparent;
 }
 
 .danger {
   color: #9b2c2c;
+}
+
+.area-drawing-panel {
+  gap: 10px;
+}
+
+.area-drawing-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
 }
 
 .floor-list {

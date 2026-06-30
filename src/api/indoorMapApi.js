@@ -49,6 +49,14 @@ export async function updateFeature(featureId, data) {
   return request(`/api/features/${featureId}`, { method: 'PATCH', body: JSON.stringify(data) });
 }
 
+export async function createFeature(data) {
+  return request('/api/features', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function deleteFeature(featureId) {
+  return request(`/api/features/${featureId}`, { method: 'DELETE' });
+}
+
 export async function publishBuilding(buildingId) {
   return request(`/api/buildings/${buildingId}/publish`, { method: 'POST', body: JSON.stringify({}) });
 }

@@ -1,7 +1,20 @@
 import { Eye, EyeOff, Trash2 } from 'lucide-react';
 import { categories } from '../utils/classifyFeatures.js';
 
-const types = ['room', 'corridor', 'poi', 'decorative'];
+const types = ['room', 'corridor', 'poi', 'custom_area', 'decorative'];
+const customAreaCategories = [
+  'entrance',
+  'lobby',
+  'reception',
+  'workspace',
+  'meeting_area',
+  'cafeteria',
+  'restricted',
+  'event_area',
+  'department',
+  'wayfinding_zone',
+  'custom',
+];
 
 function formatCategory(value) {
   if (!value) return '';
@@ -15,7 +28,7 @@ function getFeatureTitle(feature) {
     .find(Boolean) || 'Unnamed location';
 }
 
-export default function FeatureInspector({ feature, floor, onUpdateFeature }) {
+export default function FeatureInspector({ feature, floor, selectedVertexIndex, onUpdateFeature, onDeleteAreaVertex, onDeleteFeature }) {
   if (!feature) {
     return (
       <section className="inspector empty-inspector">
@@ -30,6 +43,7 @@ export default function FeatureInspector({ feature, floor, onUpdateFeature }) {
   }
 
   const title = getFeatureTitle(feature);
+  const isCustomArea = feature.type === 'custom_area';
   const subtitle = [
     feature.roomNumber ? `Room ${feature.roomNumber}` : null,
     formatCategory(feature.category),
@@ -72,7 +86,7 @@ export default function FeatureInspector({ feature, floor, onUpdateFeature }) {
       <label>
         Category
         <select value={feature.category} onChange={(event) => patch({ category: event.target.value })}>
-          {categories.map((category) => <option key={category} value={category}>{category}</option>)}
+          {(isCustomArea ? customAreaCategories : categories).map((category) => <option key={category} value={category}>{category}</option>)}
         </select>
       </label>
       <label>
@@ -88,15 +102,21 @@ export default function FeatureInspector({ feature, floor, onUpdateFeature }) {
       </label>
 
       <div className="inspector-actions">
+        {isCustomArea && (
+          <button className="secondary-button" onClick={onDeleteAreaVertex} disabled={selectedVertexIndex == null}>
+            Delete point
+          </button>
+        )}
         <button className="secondary-button" onClick={() => patch({ visible: !feature.visible })}>
           {feature.visible === false ? <Eye size={16} /> : <EyeOff size={16} />}
           {feature.visible === false ? 'Restore' : 'Hide'}
         </button>
-        <button className="secondary-button danger" onClick={() => patch({ visible: false, category: 'decorative', type: 'decorative' })}>
+        <button className="secondary-button danger" onClick={() => (isCustomArea ? onDeleteFeature?.() : patch({ visible: false, category: 'decorative', type: 'decorative' }))}>
           <Trash2 size={16} />
-          Mark noise
+          {isCustomArea ? 'Delete area' : 'Mark noise'}
         </button>
       </div>
+      {isCustomArea && <p className="muted">Drag the numbered points on the map. Click a small + on an edge to add a point.</p>}
 
       <dl className="metadata">
         <dt>Floor</dt>

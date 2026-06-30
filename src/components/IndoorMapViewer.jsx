@@ -9,6 +9,13 @@ const svgCoordinateCrs = L.extend({}, L.CRS.Simple, {
 
 const amenityCategories = new Set([
   'cafeteria',
+  'workspace',
+  'meeting_area',
+  'restricted',
+  'event_area',
+  'department',
+  'wayfinding_zone',
+  'custom',
   'kitchen',
   'pantry',
   'restroom',
@@ -59,7 +66,7 @@ function hasUsefulLabel(feature) {
 
 function isVisualFeature(feature, viewBox) {
   if (feature.visible === false || feature.category === 'decorative' || feature.geometry?.type === 'LineString') return false;
-  if (!['room', 'poi'].includes(feature.type)) return false;
+  if (!['room', 'poi', 'custom_area'].includes(feature.type)) return false;
   if (feature.category === 'corridor' || feature.category === 'unknown' || feature.confidence < 0.75) return false;
   if (feature.sourceSvg?.preparedPackage || feature.sourceSvg?.manualApproved) return true;
   if (feature.geometry?.type === 'Polygon' && !['rect', 'polygon'].includes(feature.sourceSvg?.tag)) return false;
@@ -114,6 +121,13 @@ function colorFor(feature) {
     elevator: { fill: '#efe7ff', stroke: '#5b21b6' },
     stairs: { fill: '#efe7ff', stroke: '#5b21b6' },
     lounge: { fill: '#ebf7f7', stroke: '#0f766e' },
+    workspace: { fill: '#e7f5ee', stroke: '#0f766e' },
+    meeting_area: { fill: '#f0ecff', stroke: '#7c3aed' },
+    restricted: { fill: '#ffe4e6', stroke: '#be123c' },
+    event_area: { fill: '#fff0bd', stroke: '#9a5b00' },
+    department: { fill: '#e0f2fe', stroke: '#0369a1' },
+    wayfinding_zone: { fill: '#e6f4ef', stroke: '#0f5132' },
+    custom: { fill: '#eaf2ff', stroke: '#1967d2' },
   };
   return colors[feature.category] || { fill: '#f8faf8', stroke: '#9fa9a3' };
 }
@@ -232,6 +246,13 @@ function activeLegForFloor(route, floorId) {
   return route.floorId === floorId ? route : null;
 }
 
+function editableRing(feature) {
+  const ring = feature?.geometry?.coordinates?.[0] || [];
+  if (!ring.length) return [];
+  const openRing = ring.slice(0, -1);
+  return openRing.map(([x, y]) => ({ x, y }));
+}
+
 function canDrawRouteLine(leg) {
   return ['manualGraph', 'real', 'walkableGrid', 'approximateGuidance'].includes(leg?.quality) && leg?.points?.length > 1;
 }
@@ -242,6 +263,9 @@ export default function IndoorMapViewer({
   hoveredId,
   highlightId,
   addPoiMode,
+  areaDrawingMode,
+  areaDraftPoints = [],
+  selectedVertexIndex,
   locatingMode,
   userLocation,
   locationState,
@@ -252,6 +276,10 @@ export default function IndoorMapViewer({
   onSelectFeature,
   onHoverFeature,
   onAddPoi,
+  onAddAreaPoint,
+  onUpdateAreaVertex,
+  onInsertAreaVertex,
+  onSelectAreaVertex,
   onSetLocation,
 }) {
   const hostRef = useRef(null);
@@ -261,9 +289,11 @@ export default function IndoorMapViewer({
   const layerRef = useRef(null);
   const routeRef = useRef(null);
   const graphRef = useRef(null);
+  const areaEditRef = useRef(null);
   const userMarkerRef = useRef(null);
   const anchorMarkerRef = useRef(null);
   const addPoiModeRef = useRef(addPoiMode);
+  const areaDrawingModeRef = useRef(areaDrawingMode);
   const locatingModeRef = useRef(locatingMode);
   const [trackingMode, setTrackingMode] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(0);
@@ -303,8 +333,9 @@ export default function IndoorMapViewer({
 
   useEffect(() => {
     addPoiModeRef.current = addPoiMode;
+    areaDrawingModeRef.current = areaDrawingMode;
     locatingModeRef.current = locatingMode;
-  }, [addPoiMode, locatingMode]);
+  }, [addPoiMode, areaDrawingMode, locatingMode]);
 
   useEffect(() => {
     if (!floor?.id) return undefined;
@@ -335,6 +366,10 @@ export default function IndoorMapViewer({
     map.on('dragstart', () => setTrackingMode(false));
     map.on('click', (event) => {
       const point = { x: event.latlng.lng, y: event.latlng.lat };
+      if (areaDrawingModeRef.current) {
+        onAddAreaPoint(point);
+        return;
+      }
       if (addPoiModeRef.current) onAddPoi(point);
       if (locatingModeRef.current) {
         onSetLocation(point);
@@ -347,8 +382,9 @@ export default function IndoorMapViewer({
     layerRef.current = L.layerGroup().addTo(map);
     routeRef.current = L.layerGroup().addTo(map);
     graphRef.current = L.layerGroup().addTo(map);
+    areaEditRef.current = L.layerGroup().addTo(map);
     requestAnimationFrame(() => map.invalidateSize());
-  }, [onAddPoi, onSetLocation]);
+  }, [onAddPoi, onAddAreaPoint, onSetLocation]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -627,6 +663,96 @@ export default function IndoorMapViewer({
       duration: 0.45,
     });
   }, [activeRoute?.id, activeFloorLeg?.id, floor?.id]);
+
+  useEffect(() => {
+    const group = areaEditRef.current;
+    if (!group) return;
+    group.clearLayers();
+
+    if (adminMode && areaDrawingMode && areaDraftPoints.length) {
+      const draftLatLngs = areaDraftPoints.map(pointLatLng);
+      if (draftLatLngs.length > 1) {
+        L.polyline(draftLatLngs, {
+          pane: 'endpointPane',
+          color: '#0f62fe',
+          weight: 3,
+          dashArray: '8 8',
+          opacity: 0.9,
+          interactive: false,
+        }).addTo(group);
+      }
+      if (draftLatLngs.length > 2) {
+        L.polygon(draftLatLngs, {
+          pane: 'endpointPane',
+          color: '#0f62fe',
+          weight: 2,
+          fillColor: '#0f62fe',
+          fillOpacity: 0.12,
+          dashArray: '8 8',
+          interactive: false,
+        }).addTo(group);
+      }
+      areaDraftPoints.forEach((point, index) => {
+        L.marker(pointLatLng(point), {
+          pane: 'endpointPane',
+          interactive: false,
+          icon: L.divIcon({ className: '', html: `<div class="area-vertex-handle draft">${index + 1}</div>`, iconSize: [22, 22], iconAnchor: [11, 11] }),
+        }).addTo(group);
+      });
+    }
+
+    if (!adminMode || !selectedFeature || selectedFeature.type !== 'custom_area') return;
+    const ring = editableRing(selectedFeature);
+    if (ring.length < 3) return;
+
+    ring.forEach((point, index) => {
+      const marker = L.marker(pointLatLng(point), {
+        pane: 'endpointPane',
+        draggable: true,
+        icon: L.divIcon({
+          className: '',
+          html: `<div class="area-vertex-handle ${selectedVertexIndex === index ? 'selected' : ''}">${index + 1}</div>`,
+          iconSize: [24, 24],
+          iconAnchor: [12, 12],
+        }),
+      }).addTo(group);
+      marker.on('click', (event) => {
+        L.DomEvent.stopPropagation(event);
+        onSelectAreaVertex?.(index);
+      });
+      marker.on('dragend', () => {
+        const latlng = marker.getLatLng();
+        onUpdateAreaVertex?.(selectedFeature, index, { x: latlng.lng, y: latlng.lat });
+      });
+    });
+
+    ring.forEach((point, index) => {
+      const next = ring[(index + 1) % ring.length];
+      const midpoint = { x: (point.x + next.x) / 2, y: (point.y + next.y) / 2 };
+      const marker = L.marker(pointLatLng(midpoint), {
+        pane: 'endpointPane',
+        icon: L.divIcon({
+          className: '',
+          html: '<div class="area-edge-add">+</div>',
+          iconSize: [20, 20],
+          iconAnchor: [10, 10],
+        }),
+      }).addTo(group);
+      marker.on('click', (event) => {
+        L.DomEvent.stopPropagation(event);
+        onInsertAreaVertex?.(selectedFeature, index, midpoint);
+      });
+    });
+  }, [
+    adminMode,
+    areaDrawingMode,
+    areaDraftPoints,
+    selectedFeature,
+    selectedVertexIndex,
+    onSelectAreaVertex,
+    onUpdateAreaVertex,
+    onInsertAreaVertex,
+  ]);
 
   function recenterOnMe() {
     const map = mapRef.current;
