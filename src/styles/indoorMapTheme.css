@@ -35,6 +35,11 @@
   cursor: grabbing;
 }
 
+.leaflet-container.drawing-area-active,
+.leaflet-container.drawing-area-active * {
+  cursor: crosshair !important;
+}
+
 .leaflet-svg-background {
   image-rendering: auto;
   transition: opacity 180ms ease;

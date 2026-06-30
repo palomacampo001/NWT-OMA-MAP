@@ -396,6 +396,23 @@ export default function IndoorMapViewer({
 
   useEffect(() => {
     const map = mapRef.current;
+    const container = map?.getContainer();
+    if (!map || !container) return undefined;
+    if (areaDrawingMode) {
+      map.dragging.disable();
+      container.classList.add('drawing-area-active');
+    } else {
+      map.dragging.enable();
+      container.classList.remove('drawing-area-active');
+    }
+    return () => {
+      map.dragging.enable();
+      container.classList.remove('drawing-area-active');
+    };
+  }, [areaDrawingMode]);
+
+  useEffect(() => {
+    const map = mapRef.current;
     if (!map || !floor) return;
     const bounds = floorBoundsFromViewBox(viewBox);
     map.setMaxBounds(bounds);
@@ -509,10 +526,13 @@ export default function IndoorMapViewer({
         const variant = active ? 'selected' : major ? 'major' : 'tiny';
         const marker = L.marker(latLng(feature.geometry.coordinates), {
           pane: active ? 'endpointPane' : major ? 'majorPoiPane' : 'labelPane',
+          interactive: !areaDrawingMode,
           icon: L.divIcon({ className: '', html: markerHtml(feature, variant), iconSize: active ? [34, 34] : major ? [20, 20] : [6, 6], iconAnchor: active ? [17, 17] : major ? [10, 10] : [3, 3] }),
         });
-        marker.on('click', () => onSelectFeature(feature));
-        marker.on('mouseover', () => onHoverFeature(feature.id));
+        if (!areaDrawingMode) {
+          marker.on('click', () => onSelectFeature(feature));
+          marker.on('mouseover', () => onHoverFeature(feature.id));
+        }
         marker.addTo(group);
         if (active) addLabel(group, feature, featureCenter(feature), 'selected');
         return;
@@ -525,12 +545,14 @@ export default function IndoorMapViewer({
       const overviewPolygon = L.polygon(ring.map(latLng), {
         pane: 'overviewPane',
         className: `leaflet-overview-feature leaflet-category-${feature.category}`,
-        interactive: lod.isLow || active,
+        interactive: !areaDrawingMode && (lod.isLow || active),
         ...overviewStyle,
       });
-      overviewPolygon.on('click', () => onSelectFeature(feature));
-      overviewPolygon.on('mouseover', () => onHoverFeature(feature.id));
-      overviewPolygon.on('mouseout', () => onHoverFeature(''));
+      if (!areaDrawingMode) {
+        overviewPolygon.on('click', () => onSelectFeature(feature));
+        overviewPolygon.on('mouseover', () => onHoverFeature(feature.id));
+        overviewPolygon.on('mouseout', () => onHoverFeature(''));
+      }
       overviewPolygon.addTo(group);
       if (activeRoute && layerOptions.hideClutterDuringNavigation && !active) return;
       if (lod.isLow && !active) return;
@@ -538,11 +560,14 @@ export default function IndoorMapViewer({
       const polygon = L.polygon(ring.map(latLng), {
         pane: 'spacePane',
         className: `leaflet-feature leaflet-category-${feature.category}`,
+        interactive: !areaDrawingMode,
         ...style,
       });
-      polygon.on('click', () => onSelectFeature(feature));
-      polygon.on('mouseover', () => onHoverFeature(feature.id));
-      polygon.on('mouseout', () => onHoverFeature(''));
+      if (!areaDrawingMode) {
+        polygon.on('click', () => onSelectFeature(feature));
+        polygon.on('mouseover', () => onHoverFeature(feature.id));
+        polygon.on('mouseout', () => onHoverFeature(''));
+      }
       polygon.addTo(group);
       if (active) {
         const center = featureCenter(feature);
@@ -552,7 +577,7 @@ export default function IndoorMapViewer({
         addLabel(group, feature, center, 'quiet');
       }
     });
-  }, [visualFeatures, selectedId, hoveredId, highlightId, onSelectFeature, onHoverFeature, viewBox, zoomLevel, baseZoom, floorAccent, lod.isLow, lod.isVeryHigh, activeRoute, layerOptions]);
+  }, [visualFeatures, selectedId, hoveredId, highlightId, onSelectFeature, onHoverFeature, viewBox, zoomLevel, baseZoom, floorAccent, lod.isLow, lod.isVeryHigh, activeRoute, layerOptions, areaDrawingMode]);
 
   useEffect(() => {
     const map = mapRef.current;
