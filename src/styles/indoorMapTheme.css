@@ -324,7 +324,7 @@
   border: 1px solid #cfd7d3;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 10px 26px rgba(20, 31, 43, 0.14);
+  box-shadow: 0 2px 8px rgba(20, 31, 43, 0.08);
   color: #334047;
   font-size: 13px;
   pointer-events: none;
@@ -866,6 +866,7 @@
     overflow: hidden;
     gap: 8px;
     font-size: 12px;
+    box-shadow: 0 1px 4px rgba(20, 31, 43, 0.06);
   }
 
   .map-status span:nth-of-type(n + 4) {
@@ -878,6 +879,7 @@
     bottom: 144px;
     max-height: 118px;
     overflow: hidden;
+    box-shadow: 0 1px 5px rgba(20, 31, 43, 0.07);
   }
 
   .compass-widget {
@@ -885,6 +887,7 @@
     bottom: max(10px, env(safe-area-inset-bottom));
     max-width: calc(100% - 20px);
     grid-template-columns: 42px minmax(0, 1fr);
+    box-shadow: 0 1px 5px rgba(20, 31, 43, 0.07);
   }
 
   .navigation-drawer ~ .floating-controls,

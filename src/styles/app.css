@@ -1000,6 +1000,7 @@ p {
     right: 10px;
     bottom: max(10px, env(safe-area-inset-bottom));
     border-radius: 18px;
+    box-shadow: 0 -3px 12px rgba(20, 31, 43, 0.1);
   }
 
   .navigation-drawer.expanded {
