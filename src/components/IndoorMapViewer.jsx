@@ -610,6 +610,7 @@ export default function IndoorMapViewer({
     const map = mapRef.current;
     if (!group || !map) return;
     group.clearLayers();
+    const showUserArrow = userLocation?.floorId === floor?.id;
     if (canDrawRouteLine(activeFloorLeg)) {
       const routeLatLngs = activeFloorLeg.points.map(pointLatLng);
       const approximate = ['approximateGuidance', 'previewGuidance'].includes(activeFloorLeg.quality);
@@ -635,7 +636,7 @@ export default function IndoorMapViewer({
       const flow = !approximate
         ? L.polyline(routeLatLngs, { pane: 'routePane', color: '#93c5fd', weight: 3, opacity: 0.78, lineCap: 'round', lineJoin: 'round', dashArray: '12 18', className: 'route-line-flow-highlight' }).addTo(group)
         : null;
-      const origin = L.marker(routeLatLngs[0], {
+      const origin = showUserArrow ? null : L.marker(routeLatLngs[0], {
         pane: 'endpointPane',
         icon: L.divIcon({ className: '', html: '<div class="route-endpoint route-origin"></div>', iconSize: [22, 22], iconAnchor: [11, 11] }),
       }).addTo(group);
@@ -660,11 +661,11 @@ export default function IndoorMapViewer({
       halo.bringToFront();
       line.bringToFront();
       flow?.bringToFront();
-      origin.setZIndexOffset(1000);
+      origin?.setZIndexOffset(1000);
       destination.setZIndexOffset(1000);
     } else if (activeFloorLeg?.routeAvailable && activeFloorLeg?.points?.length > 1) {
       const routeLatLngs = activeFloorLeg.points.map(pointLatLng);
-      const origin = L.marker(routeLatLngs[0], {
+      const origin = showUserArrow ? null : L.marker(routeLatLngs[0], {
         pane: 'endpointPane',
         icon: L.divIcon({ className: '', html: '<div class="route-endpoint route-origin"></div>', iconSize: [22, 22], iconAnchor: [11, 11] }),
       }).addTo(group);
@@ -673,7 +674,7 @@ export default function IndoorMapViewer({
         icon: L.divIcon({ className: '', html: `<div class="route-focus-ring"></div><div class="route-endpoint ${activeFloorLeg.connector ? 'route-transfer' : 'route-destination'}"></div>`, iconSize: [42, 42], iconAnchor: [21, 21] }),
       }).addTo(group);
       addLabel(group, { displayName: activeFloorLeg.connector ? `Go to ${activeFloorLeg.connector.name}` : activeFloorLeg.destinationName }, activeFloorLeg.points[activeFloorLeg.points.length - 1], 'selected');
-      origin.setZIndexOffset(1000);
+      origin?.setZIndexOffset(1000);
       target.setZIndexOffset(1000);
     }
     if (userMarkerRef.current) {
@@ -691,6 +692,7 @@ export default function IndoorMapViewer({
           iconAnchor: [22, 22],
         }),
       }).addTo(map);
+      userMarkerRef.current.setZIndexOffset(2500);
       if (trackingMode) map.setView(pointLatLng(userLocation.point), Math.max(map.getZoom(), 0));
     }
     if (anchorMarkerRef.current) {
