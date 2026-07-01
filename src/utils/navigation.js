@@ -21,6 +21,11 @@ function connectorText(feature) {
   return `${feature?.displayName || ''} ${feature?.name || ''} ${feature?.roomNumber || ''} ${feature?.category || ''}`.toLowerCase();
 }
 
+function connectorName(featureOrConnector) {
+  const feature = featureOrConnector?.feature || featureOrConnector;
+  return `${feature?.displayName || featureOrConnector?.name || ''} ${feature?.name || ''} ${feature?.roomNumber || ''} ${feature?.id || featureOrConnector?.poiId || ''}`.trim();
+}
+
 function connectorType(feature) {
   const text = connectorText(feature);
   if (/elevator|\belev\b|\bel\b|\d+el\d*/i.test(text)) return 'elevator';
@@ -49,7 +54,65 @@ function connectorPreferenceLabel(type) {
   return connectorTypeLabel(type);
 }
 
-function verticalConnectorCandidates(floor) {
+function floorLevel(floor) {
+  if (!floor) return null;
+  if (Number.isFinite(Number(floor.levelNumber))) return Number(floor.levelNumber);
+  const label = `${floor.name || ''} ${floor.id || ''}`;
+  const levelMatch = label.match(/level[-_\s]*(\d+)/i);
+  if (levelMatch) return Number(levelMatch[1]);
+  const floorMatch = label.match(/floor[-_\s]*(\d+)/i);
+  if (floorMatch) return Number(floorMatch[1]);
+  const omaMatch = label.match(/oma[-_\s]*(\d{2})/i);
+  if (omaMatch) return Number(omaMatch[1]);
+  return null;
+}
+
+function floorByLevel(floors, level) {
+  return floors.find((floor) => floorLevel(floor) === level);
+}
+
+function isNamedElevator(featureOrConnector) {
+  return /\b\d{2}EL\d{2,}\b/i.test(connectorName(featureOrConnector).replace(/[-_]/g, ' '));
+}
+
+function isFloorOneRegistrationElevator(connector) {
+  const name = connectorName(connector).toUpperCase();
+  return connector.type === 'elevator' && (
+    /\b01EL0?1\b/.test(name)
+    || /\b01E25\b/.test(name)
+    || name.includes('REGISTRATION')
+  );
+}
+
+function isEntranceEscalator(connector) {
+  const name = connectorName(connector).toLowerCase();
+  return connector.type === 'escalator' && (name.includes('entrance escalator') || name.includes('esc-g'));
+}
+
+function isConnectorUsable(connector, routeContext = {}) {
+  const level = floorLevel(routeContext.floor);
+  if (!connector?.point || connector.feature?.visible === false) return false;
+
+  if (level === 1) {
+    if (connector.type === 'elevator') return false;
+    if (connector.type === 'escalator') return isEntranceEscalator(connector);
+  }
+
+  if (level === 2) {
+    if (connector.type === 'elevator') return isNamedElevator(connector);
+    if (connector.type === 'escalator') return isEntranceEscalator(connector);
+  }
+
+  if (level > 2) {
+    if (connector.type === 'elevator') return isNamedElevator(connector);
+    if (connector.type === 'escalator') return false;
+  }
+
+  if (isFloorOneRegistrationElevator(connector)) return false;
+  return true;
+}
+
+function verticalConnectorCandidates(floor, routeContext = {}) {
   return (floor?.features || [])
     .filter((feature) => feature.visible !== false && connectorType(feature))
     .map((feature) => ({
@@ -62,7 +125,8 @@ function verticalConnectorCandidates(floor) {
       point: featureCenter(feature),
       feature,
     }))
-    .filter((connector) => connector.point);
+    .filter((connector) => connector.point)
+    .filter((connector) => !routeContext.publicRoutingOnly || isConnectorUsable(connector, { ...routeContext, floor }));
 }
 
 export function buildVerticalConnectors(floors = []) {
@@ -386,11 +450,388 @@ function previewLeg(args) {
   };
 }
 
+function sortConnectorByName(a, b) {
+  return connectorName(a).localeCompare(connectorName(b), undefined, { numeric: true, sensitivity: 'base' });
+}
+
+function findConnector(floor, { type, preferred = [] } = {}) {
+  const candidates = verticalConnectorCandidates(floor, { publicRoutingOnly: true })
+    .filter((connector) => !type || connector.type === type)
+    .sort(sortConnectorByName);
+  if (!candidates.length) return null;
+  for (const pattern of preferred) {
+    const match = candidates.find((connector) => pattern.test(connectorName(connector)));
+    if (match) return match;
+  }
+  return candidates[0];
+}
+
+function makeWalkLeg({ id, floor, graph, from, to, destinationName, instruction, connector, startConnector, endConnector, destinationFeature }) {
+  return graphLeg({
+    id,
+    floor,
+    graph,
+    from,
+    to,
+    destinationName,
+    instruction,
+    connector,
+    startConnector,
+    endConnector,
+    destinationFeature,
+  }) || previewLeg({
+    id: `${id}-preview`,
+    floor,
+    from,
+    to,
+    destinationName,
+    instruction,
+    connector,
+  });
+}
+
+function makeTransferLeg({ id, type, fromFloor, toFloor, from, to, instruction }) {
+  return {
+    id,
+    type: 'transfer',
+    connectorType: type,
+    fromFloorId: fromFloor.id,
+    toFloorId: toFloor.id,
+    fromFloorName: floorLabel(fromFloor),
+    toFloorName: floorLabel(toFloor),
+    from,
+    to,
+    instructions: [{
+      id: `${id}-step`,
+      text: instruction,
+      distance: 0,
+      direction: 'transfer',
+    }],
+  };
+}
+
+function routeFromLegs({ id, originFloorId, destinationFloorId, destinationFeature, destinationName, legs, notice }) {
+  const walkLegs = legs.filter((leg) => leg.type === 'walk');
+  const firstLeg = walkLegs[0];
+  const hasPreview = walkLegs.some((leg) => ['previewGuidance', 'approximateGuidance'].includes(leg.quality) || leg.routeAvailable === false);
+  const instructions = legs.flatMap((leg) => leg.instructions || []);
+  const activeFloorIds = [...new Set(legs.flatMap((leg) => (
+    leg.type === 'transfer'
+      ? [leg.fromFloorId, leg.toFloorId]
+      : [leg.floorId]
+  )).filter(Boolean))];
+  const transfer = legs.find((leg) => leg.type === 'transfer');
+  return {
+    id,
+    originFloorId,
+    destinationFloorId,
+    floorId: originFloorId,
+    destinationId: destinationFeature.id,
+    destinationName,
+    routeAvailable: true,
+    approximate: hasPreview,
+    quality: hasPreview ? 'previewGuidance' : 'manualGraph',
+    mode: hasPreview ? 'building-preview-guidance' : 'building-route-graph',
+    points: firstLeg?.points || [],
+    heading: firstLeg?.heading || 0,
+    distance: walkLegs.reduce((sum, leg) => sum + (leg.distance || 0), 0),
+    legs,
+    activeFloorIds,
+    transfer,
+    instructions,
+    notice: notice || (hasPreview ? 'Approximate guidance shown — follow visible hallways.' : 'Hallway route shown.'),
+  };
+}
+
+function planOmahaVerticalRoute({ floors, originFloor, destinationFloor, originPoint, destinationPoint, destinationFeature, routeGraphs }) {
+  const originLevel = floorLevel(originFloor);
+  const destinationLevel = floorLevel(destinationFloor);
+  const floor2 = floorByLevel(floors, 2);
+  const destinationName = formatFeatureLabel(destinationFeature);
+  if (!originLevel || !destinationLevel || originLevel === destinationLevel) return null;
+  if (!floor2) return null;
+
+  const f1Escalator = originLevel === 1 || destinationLevel === 1
+    ? findConnector(floorByLevel(floors, 1), { type: 'escalator', preferred: [/entrance escalator/i] })
+    : null;
+  const floor2Escalator = findConnector(floor2, { type: 'escalator', preferred: [/esc[-_\s]*g/i, /entrance escalator/i] });
+  const floor2Elevator = findConnector(floor2, { type: 'elevator', preferred: [/\b02EL01\b/i, /\b02EL\d+\b/i] });
+  const destinationElevator = destinationLevel > 2
+    ? findConnector(destinationFloor, { type: 'elevator', preferred: [new RegExp(`\\b${String(destinationLevel).padStart(2, '0')}EL01\\b`, 'i'), /\b\d{2}EL\d+\b/i] })
+    : null;
+  const originElevator = originLevel > 2
+    ? findConnector(originFloor, { type: 'elevator', preferred: [new RegExp(`\\b${String(originLevel).padStart(2, '0')}EL01\\b`, 'i'), /\b\d{2}EL\d+\b/i] })
+    : null;
+
+  const legs = [];
+  const routeId = `route-building-${originFloor.id}-${destinationFloor.id}-${destinationFeature.id}`;
+
+  if (originLevel === 1 && destinationLevel === 2) {
+    if (!f1Escalator || !floor2Escalator) return null;
+    legs.push(makeWalkLeg({
+      id: 'leg-lobby-to-escalator',
+      floor: originFloor,
+      graph: routeGraphs[originFloor.id],
+      from: originPoint,
+      to: f1Escalator.point,
+      destinationName: f1Escalator.name,
+      connector: f1Escalator,
+      endConnector: f1Escalator,
+      instruction: 'Go through the turnstiles to the Entrance Escalator.',
+    }));
+    legs.push(makeTransferLeg({
+      id: 'transfer-entrance-escalator-up',
+      type: 'escalator',
+      fromFloor: originFloor,
+      toFloor: floor2,
+      from: f1Escalator,
+      to: floor2Escalator,
+      instruction: 'Take the entrance escalator to Floor 2.',
+    }));
+    legs.push(makeWalkLeg({
+      id: 'leg-floor2-escalator-to-destination',
+      floor: destinationFloor,
+      graph: routeGraphs[destinationFloor.id],
+      from: floor2Escalator.point,
+      to: destinationPoint,
+      destinationName,
+      startConnector: floor2Escalator,
+      destinationFeature,
+      instruction: `From the Floor 2 escalator landing, continue to ${destinationName}.`,
+    }));
+    return routeFromLegs({ id: routeId, originFloorId: originFloor.id, destinationFloorId: destinationFloor.id, destinationFeature, destinationName, legs });
+  }
+
+  if (originLevel === 1 && destinationLevel > 2) {
+    if (!f1Escalator || !floor2Escalator || !floor2Elevator || !destinationElevator) return null;
+    legs.push(makeWalkLeg({
+      id: 'leg-lobby-to-escalator',
+      floor: originFloor,
+      graph: routeGraphs[originFloor.id],
+      from: originPoint,
+      to: f1Escalator.point,
+      destinationName: f1Escalator.name,
+      connector: f1Escalator,
+      endConnector: f1Escalator,
+      instruction: 'Go through the turnstiles to the Entrance Escalator.',
+    }));
+    legs.push(makeTransferLeg({
+      id: 'transfer-entrance-escalator-up',
+      type: 'escalator',
+      fromFloor: originFloor,
+      toFloor: floor2,
+      from: f1Escalator,
+      to: floor2Escalator,
+      instruction: 'Take the entrance escalator to Floor 2.',
+    }));
+    legs.push(makeWalkLeg({
+      id: 'leg-floor2-escalator-to-elevator',
+      floor: floor2,
+      graph: routeGraphs[floor2.id],
+      from: floor2Escalator.point,
+      to: floor2Elevator.point,
+      destinationName: floor2Elevator.name,
+      connector: floor2Elevator,
+      startConnector: floor2Escalator,
+      endConnector: floor2Elevator,
+      instruction: 'Walk from the escalator landing to the Floor 2 elevator bank.',
+    }));
+    legs.push(makeTransferLeg({
+      id: 'transfer-elevator-up',
+      type: 'elevator',
+      fromFloor: floor2,
+      toFloor: destinationFloor,
+      from: floor2Elevator,
+      to: destinationElevator,
+      instruction: `Take the elevator to ${floorLabel(destinationFloor)}.`,
+    }));
+    legs.push(makeWalkLeg({
+      id: 'leg-destination-elevator-to-destination',
+      floor: destinationFloor,
+      graph: routeGraphs[destinationFloor.id],
+      from: destinationElevator.point,
+      to: destinationPoint,
+      destinationName,
+      startConnector: destinationElevator,
+      destinationFeature,
+      instruction: `From the ${floorLabel(destinationFloor)} elevator bank, continue to ${destinationName}.`,
+    }));
+    return routeFromLegs({ id: routeId, originFloorId: originFloor.id, destinationFloorId: destinationFloor.id, destinationFeature, destinationName, legs });
+  }
+
+  if (originLevel === 2 && destinationLevel > 2) {
+    if (!floor2Elevator || !destinationElevator) return null;
+    legs.push(makeWalkLeg({
+      id: 'leg-floor2-to-elevator',
+      floor: originFloor,
+      graph: routeGraphs[originFloor.id],
+      from: originPoint,
+      to: floor2Elevator.point,
+      destinationName: floor2Elevator.name,
+      connector: floor2Elevator,
+      endConnector: floor2Elevator,
+      instruction: 'Go to the Floor 2 elevator bank.',
+    }));
+    legs.push(makeTransferLeg({
+      id: 'transfer-elevator-up',
+      type: 'elevator',
+      fromFloor: originFloor,
+      toFloor: destinationFloor,
+      from: floor2Elevator,
+      to: destinationElevator,
+      instruction: `Take the elevator to ${floorLabel(destinationFloor)}.`,
+    }));
+    legs.push(makeWalkLeg({
+      id: 'leg-destination-elevator-to-destination',
+      floor: destinationFloor,
+      graph: routeGraphs[destinationFloor.id],
+      from: destinationElevator.point,
+      to: destinationPoint,
+      destinationName,
+      startConnector: destinationElevator,
+      destinationFeature,
+      instruction: `From the ${floorLabel(destinationFloor)} elevator bank, continue to ${destinationName}.`,
+    }));
+    return routeFromLegs({ id: routeId, originFloorId: originFloor.id, destinationFloorId: destinationFloor.id, destinationFeature, destinationName, legs });
+  }
+
+  if (originLevel > 2 && destinationLevel === 2) {
+    if (!originElevator || !floor2Elevator) return null;
+    legs.push(makeWalkLeg({
+      id: 'leg-origin-to-elevator',
+      floor: originFloor,
+      graph: routeGraphs[originFloor.id],
+      from: originPoint,
+      to: originElevator.point,
+      destinationName: originElevator.name,
+      connector: originElevator,
+      endConnector: originElevator,
+      instruction: `Go to the ${floorLabel(originFloor)} elevator bank.`,
+    }));
+    legs.push(makeTransferLeg({
+      id: 'transfer-elevator-down',
+      type: 'elevator',
+      fromFloor: originFloor,
+      toFloor: floor2,
+      from: originElevator,
+      to: floor2Elevator,
+      instruction: 'Take the elevator to Floor 2.',
+    }));
+    legs.push(makeWalkLeg({
+      id: 'leg-floor2-elevator-to-destination',
+      floor: destinationFloor,
+      graph: routeGraphs[destinationFloor.id],
+      from: floor2Elevator.point,
+      to: destinationPoint,
+      destinationName,
+      startConnector: floor2Elevator,
+      destinationFeature,
+      instruction: `From the Floor 2 elevator bank, continue to ${destinationName}.`,
+    }));
+    return routeFromLegs({ id: routeId, originFloorId: originFloor.id, destinationFloorId: destinationFloor.id, destinationFeature, destinationName, legs });
+  }
+
+  if (originLevel > 2 && destinationLevel === 1) {
+    if (!originElevator || !floor2Elevator || !floor2Escalator || !f1Escalator) return null;
+    legs.push(makeWalkLeg({
+      id: 'leg-origin-to-elevator',
+      floor: originFloor,
+      graph: routeGraphs[originFloor.id],
+      from: originPoint,
+      to: originElevator.point,
+      destinationName: originElevator.name,
+      connector: originElevator,
+      endConnector: originElevator,
+      instruction: `Go to the ${floorLabel(originFloor)} elevator bank.`,
+    }));
+    legs.push(makeTransferLeg({
+      id: 'transfer-elevator-down',
+      type: 'elevator',
+      fromFloor: originFloor,
+      toFloor: floor2,
+      from: originElevator,
+      to: floor2Elevator,
+      instruction: 'Take the elevator to Floor 2.',
+    }));
+    legs.push(makeWalkLeg({
+      id: 'leg-floor2-elevator-to-escalator',
+      floor: floor2,
+      graph: routeGraphs[floor2.id],
+      from: floor2Elevator.point,
+      to: floor2Escalator.point,
+      destinationName: floor2Escalator.name,
+      connector: floor2Escalator,
+      startConnector: floor2Elevator,
+      endConnector: floor2Escalator,
+      instruction: 'Walk from the Floor 2 elevator bank to the entrance escalator landing.',
+    }));
+    legs.push(makeTransferLeg({
+      id: 'transfer-entrance-escalator-down',
+      type: 'escalator',
+      fromFloor: floor2,
+      toFloor: destinationFloor,
+      from: floor2Escalator,
+      to: f1Escalator,
+      instruction: 'Take the entrance escalator down to Floor 1.',
+    }));
+    legs.push(makeWalkLeg({
+      id: 'leg-floor1-escalator-to-destination',
+      floor: destinationFloor,
+      graph: routeGraphs[destinationFloor.id],
+      from: f1Escalator.point,
+      to: destinationPoint,
+      destinationName,
+      startConnector: f1Escalator,
+      destinationFeature,
+      instruction: `Pass through the turnstiles and continue to ${destinationName}.`,
+    }));
+    return routeFromLegs({ id: routeId, originFloorId: originFloor.id, destinationFloorId: destinationFloor.id, destinationFeature, destinationName, legs });
+  }
+
+  if (originLevel === 2 && destinationLevel === 1) {
+    if (!floor2Escalator || !f1Escalator) return null;
+    legs.push(makeWalkLeg({
+      id: 'leg-floor2-to-escalator',
+      floor: originFloor,
+      graph: routeGraphs[originFloor.id],
+      from: originPoint,
+      to: floor2Escalator.point,
+      destinationName: floor2Escalator.name,
+      connector: floor2Escalator,
+      endConnector: floor2Escalator,
+      instruction: 'Go to the entrance escalator landing on Floor 2.',
+    }));
+    legs.push(makeTransferLeg({
+      id: 'transfer-entrance-escalator-down',
+      type: 'escalator',
+      fromFloor: originFloor,
+      toFloor: destinationFloor,
+      from: floor2Escalator,
+      to: f1Escalator,
+      instruction: 'Take the entrance escalator down to Floor 1.',
+    }));
+    legs.push(makeWalkLeg({
+      id: 'leg-floor1-escalator-to-destination',
+      floor: destinationFloor,
+      graph: routeGraphs[destinationFloor.id],
+      from: f1Escalator.point,
+      to: destinationPoint,
+      destinationName,
+      startConnector: f1Escalator,
+      destinationFeature,
+      instruction: `Pass through the turnstiles and continue to ${destinationName}.`,
+    }));
+    return routeFromLegs({ id: routeId, originFloorId: originFloor.id, destinationFloorId: destinationFloor.id, destinationFeature, destinationName, legs });
+  }
+
+  return null;
+}
+
 function bestConnectorPair({ floors, originFloorId, destinationFloorId, originPoint, destinationPoint, connectorPreference = 'any' }) {
   const originFloor = floors.find((floor) => floor.id === originFloorId);
   const destinationFloor = floors.find((floor) => floor.id === destinationFloorId);
-  const originConnectors = verticalConnectorCandidates(originFloor);
-  const destinationConnectors = verticalConnectorCandidates(destinationFloor);
+  const originConnectors = verticalConnectorCandidates(originFloor, { publicRoutingOnly: true, originFloorId, destinationFloorId });
+  const destinationConnectors = verticalConnectorCandidates(destinationFloor, { publicRoutingOnly: true, originFloorId, destinationFloorId });
   const pairs = [];
   originConnectors.forEach((origin) => {
     destinationConnectors.forEach((destination) => {
@@ -464,6 +905,18 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
       notice: 'Hallway route shown.',
     };
   }
+
+  const buildingRoute = planOmahaVerticalRoute({
+    floors,
+    originFloor,
+    destinationFloor,
+    originPoint,
+    destinationPoint,
+    destinationFeature,
+    routeGraphs,
+    connectorPreference,
+  });
+  if (buildingRoute) return buildingRoute;
 
   const pair = bestConnectorPair({ floors, originFloorId, destinationFloorId, originPoint, destinationPoint, connectorPreference });
   if (!pair) {
