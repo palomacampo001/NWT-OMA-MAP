@@ -681,9 +681,15 @@ export default function IndoorMapViewer({
       userMarkerRef.current = null;
     }
     if (userLocation?.floorId === floor?.id) {
+      const userHeading = activeFloorLeg?.heading ?? activeRoute?.heading ?? 0;
       userMarkerRef.current = L.marker(pointLatLng(userLocation.point), {
         pane: 'endpointPane',
-        icon: L.divIcon({ className: '', html: '<div class="leaflet-you-ring"></div><div class="leaflet-you-dot"></div>', iconSize: [38, 38], iconAnchor: [19, 19] }),
+        icon: L.divIcon({
+          className: '',
+          html: `<div class="leaflet-you-ring"></div><div class="leaflet-you-heading" style="transform: rotate(${userHeading}deg)"><div class="leaflet-you-arrow"></div></div>`,
+          iconSize: [44, 44],
+          iconAnchor: [22, 22],
+        }),
       }).addTo(map);
       if (trackingMode) map.setView(pointLatLng(userLocation.point), Math.max(map.getZoom(), 0));
     }
