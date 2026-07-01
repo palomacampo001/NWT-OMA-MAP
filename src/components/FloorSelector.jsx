@@ -12,6 +12,8 @@ export default function FloorSelector({ floors, activeFloorId, routeFloorIds = [
               routeFloorIds.includes(floor.id) ? 'in-route' : '',
             ].filter(Boolean).join(' ')}
             onClick={() => onSelectFloor(floor.id)}
+            aria-pressed={floor.id === activeFloorId}
+            aria-label={`Show ${floor.name}${routeFloorIds.includes(floor.id) ? ', included in current route' : ''}`}
           >
             {floor.name}
             {!compact && <span>{floor.features.length} features</span>}

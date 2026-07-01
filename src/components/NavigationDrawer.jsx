@@ -1,7 +1,16 @@
 import { useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, LocateFixed, Navigation, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, LocateFixed, Navigation, Volume2, VolumeX, X } from 'lucide-react';
 
-export default function NavigationDrawer({ route, activeFloorId, onSelectFloor, onClearRoute, onToggleLocate }) {
+export default function NavigationDrawer({
+  route,
+  activeFloorId,
+  voiceGuidance = false,
+  onSelectFloor,
+  onClearRoute,
+  onToggleLocate,
+  onToggleVoiceGuidance,
+  onRepeatInstruction,
+}) {
   const [expanded, setExpanded] = useState(false);
   const dragStart = useRef(null);
   if (!route) return null;
@@ -23,7 +32,7 @@ export default function NavigationDrawer({ route, activeFloorId, onSelectFloor, 
   }
 
   return (
-    <section className={['navigation-drawer route-panel-enter', expanded ? 'expanded' : 'collapsed', route.quality === 'approximateGuidance' ? 'approximate-guidance' : ''].filter(Boolean).join(' ')}>
+    <section className={['navigation-drawer route-panel-enter', expanded ? 'expanded' : 'collapsed', ['approximateGuidance', 'previewGuidance'].includes(route.quality) ? 'approximate-guidance' : ''].filter(Boolean).join(' ')}>
       <button
         className="drawer-handle"
         onClick={() => setExpanded((value) => !value)}
@@ -49,7 +58,7 @@ export default function NavigationDrawer({ route, activeFloorId, onSelectFloor, 
             <span>{route.routeAvailable === false ? 'Route not ready' : 'Walking to'}</span>
             <h2>{route.destinationName}</h2>
           </div>
-          <button className="icon-button" onClick={onClearRoute} title="End route">
+          <button className="icon-button" onClick={onClearRoute} title="End route" aria-label="End route">
             <X size={18} />
           </button>
         </div>
@@ -62,8 +71,8 @@ export default function NavigationDrawer({ route, activeFloorId, onSelectFloor, 
             <span>
               {route.routeAvailable === false
                 ? route.unavailableReason
-                : route.quality === 'approximateGuidance'
-                  ? 'Approximate guidance. Follow visible hallways.'
+                : ['approximateGuidance', 'previewGuidance'].includes(route.quality)
+                  ? 'Preview guidance. Follow visible hallways.'
                   : 'Hallway route shown.'}
             </span>
           </div>
@@ -73,14 +82,24 @@ export default function NavigationDrawer({ route, activeFloorId, onSelectFloor, 
             <li
               key={step.id}
               className={index === 0 ? 'active-step-pulse' : ''}
-              onClick={() => showStep(index)}
-              title="Show this step on the map"
             >
-              {index === 0 && <Navigation size={14} />}
-              <span>{step.text}</span>
+              <button type="button" onClick={() => showStep(index)} title="Show this step on the map" aria-label={`Show route step ${index + 1}: ${step.text}`}>
+                {index === 0 && <Navigation size={14} />}
+                <span>{step.text}</span>
+              </button>
             </li>
           ))}
         </ol>
+        <div className="route-voice-actions">
+          <button className={voiceGuidance ? 'secondary-button active' : 'secondary-button'} onClick={onToggleVoiceGuidance} aria-pressed={voiceGuidance}>
+            {voiceGuidance ? <Volume2 size={16} /> : <VolumeX size={16} />}
+            {voiceGuidance ? 'Voice on' : 'Voice off'}
+          </button>
+          <button className="secondary-button" onClick={onRepeatInstruction} disabled={!voiceGuidance}>
+            <Volume2 size={16} />
+            Repeat step
+          </button>
+        </div>
         {route.legs?.length > 1 && (
           <div className="route-step-buttons">
             <button className="secondary-button" onClick={() => showStep(0)}>Show current floor leg</button>

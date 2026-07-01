@@ -1,4 +1,4 @@
-import { Crosshair, Download, Eraser, Pentagon, Plus, RotateCcw, Settings, Upload } from 'lucide-react';
+import { Contrast, Crosshair, Download, Eraser, Pentagon, Plus, RotateCcw, Settings, Upload, Volume2, VolumeX } from 'lucide-react';
 import BrandMark from './BrandMark.jsx';
 import EmptyState from './EmptyState.jsx';
 import ExportPanel from './ExportPanel.jsx';
@@ -33,6 +33,8 @@ export default function AppShell({
   activeRoute,
   connectorPreference,
   routeDestinationId,
+  highContrast,
+  voiceGuidance,
   buildingId,
   adminMode,
   published,
@@ -60,6 +62,9 @@ export default function AppShell({
   onToggleLocate,
   onRouteTo,
   onConnectorPreferenceChange,
+  onToggleHighContrast,
+  onToggleVoiceGuidance,
+  onRepeatInstruction,
   onClearRoute,
   onToggleAdmin,
   onPublish,
@@ -83,6 +88,24 @@ export default function AppShell({
           </div>
         </div>
         <div className="topbar-actions">
+          <button
+            className={highContrast ? 'ghost-button active' : 'ghost-button'}
+            onClick={onToggleHighContrast}
+            aria-pressed={highContrast}
+            title="Toggle high contrast"
+          >
+            <Contrast size={17} />
+            High contrast
+          </button>
+          <button
+            className={voiceGuidance ? 'ghost-button active' : 'ghost-button'}
+            onClick={onToggleVoiceGuidance}
+            aria-pressed={voiceGuidance}
+            title="Toggle voice guidance"
+          >
+            {voiceGuidance ? <Volume2 size={17} /> : <VolumeX size={17} />}
+            Voice
+          </button>
           <button className="ghost-button" onClick={onLoadSample} title="Load sample map">
             <RotateCcw size={17} />
             Sample
@@ -233,7 +256,16 @@ export default function AppShell({
               <p>Ask the admin to upload SVG floors, review the conversion, and press Publish map.</p>
             </div>
           )}
-          <NavigationDrawer route={activeRoute} activeFloorId={activeFloorId} onSelectFloor={onSelectFloor} onClearRoute={onClearRoute} onToggleLocate={onToggleLocate} />
+          <NavigationDrawer
+            route={activeRoute}
+            activeFloorId={activeFloorId}
+            voiceGuidance={voiceGuidance}
+            onSelectFloor={onSelectFloor}
+            onClearRoute={onClearRoute}
+            onToggleLocate={onToggleLocate}
+            onToggleVoiceGuidance={onToggleVoiceGuidance}
+            onRepeatInstruction={onRepeatInstruction}
+          />
           {hasFloors && (
             <div className="floating-controls">
               <FloorSelector compact floors={mapData.floors} activeFloorId={activeFloorId} routeFloorIds={activeRoute?.activeFloorIds || []} onSelectFloor={onSelectFloor} />

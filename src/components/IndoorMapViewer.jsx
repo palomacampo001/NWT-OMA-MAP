@@ -186,35 +186,35 @@ function lodForZoom(zoom, baseZoom) {
 function backgroundOpacityForZoom(zoom, baseZoom) {
   const lod = lodForZoom(zoom, baseZoom);
   if (lod.isLow) return 0;
-  if (lod.isMedium) return 0.18;
-  if (lod.isVeryHigh) return 0.74;
-  return 0.52;
+  if (lod.isMedium) return 0.24;
+  if (lod.isVeryHigh) return 0.82;
+  return 0.6;
 }
 
 function overviewStyleForZoom({ active, hovered, accent, zoom, baseZoom }) {
   const lod = lodForZoom(zoom, baseZoom);
   if (active) {
-    return { color: accent, weight: 3, fillColor: accent, fillOpacity: 0.34, opacity: 1 };
+    return { color: accent, weight: 4, fillColor: accent, fillOpacity: 0.42, opacity: 1 };
   }
   return {
     color: hovered ? '#334155' : accent,
-    weight: lod.isLow ? 1.6 : 1,
+    weight: lod.isLow ? 1.9 : 1.35,
     fillColor: accent,
-    fillOpacity: lod.isLow ? 0.2 : lod.isMedium ? 0.12 : 0.045,
-    opacity: lod.isLow ? 0.68 : lod.isMedium ? 0.42 : 0.22,
+    fillOpacity: lod.isLow ? 0.26 : lod.isMedium ? 0.16 : 0.07,
+    opacity: lod.isLow ? 0.82 : lod.isMedium ? 0.56 : 0.34,
   };
 }
 
 function spaceStyleForZoom({ active, hovered, colors, accent, zoom, baseZoom }) {
   const lod = lodForZoom(zoom, baseZoom);
   if (active) {
-    return { color: accent, weight: 3, fillColor: colors.fill, fillOpacity: 0.32, opacity: 1 };
+    return { color: accent, weight: 4, fillColor: colors.fill, fillOpacity: 0.42, opacity: 1 };
   }
-  const fillOpacity = lod.isLow ? 0 : lod.isMedium ? 0.16 : lod.isVeryHigh ? 0.18 : 0.11;
-  const opacity = lod.isLow ? 0 : lod.isMedium ? 0.58 : lod.isVeryHigh ? 0.86 : 0.74;
+  const fillOpacity = lod.isLow ? 0 : lod.isMedium ? 0.22 : lod.isVeryHigh ? 0.24 : 0.16;
+  const opacity = lod.isLow ? 0 : lod.isMedium ? 0.7 : lod.isVeryHigh ? 0.95 : 0.84;
   return {
     color: hovered ? '#4a8be8' : colors.stroke,
-    weight: lod.isVeryHigh ? 1.15 : 0.9,
+    weight: lod.isVeryHigh ? 1.7 : 1.35,
     fillColor: colors.fill,
     fillOpacity,
     opacity,

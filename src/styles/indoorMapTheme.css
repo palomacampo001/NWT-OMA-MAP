@@ -2,13 +2,13 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
-  background: #e9ece8;
+  background: var(--map-bg);
 }
 
 .leaflet-map-host {
   position: absolute;
   inset: 0;
-  background: #e9ece8;
+  background: var(--map-bg);
 }
 
 .area-click-capture {
@@ -25,7 +25,7 @@
 .leaflet-container {
   width: 100%;
   height: 100%;
-  background: #e9ece8;
+  background: var(--map-bg);
   font-family: inherit;
   cursor: grab;
   overflow: hidden;
@@ -182,7 +182,7 @@
 }
 
 .leaflet-room-label {
-  color: #2f3a41;
+  color: var(--label-text);
   font-size: 13px;
   font-weight: 750;
   text-align: center;
@@ -201,12 +201,12 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(31, 41, 55, 0.18);
+  border: 2px solid rgba(31, 41, 55, 0.34);
   background: white;
   color: #1e252b;
   font-size: 10px;
   font-weight: 800;
-  box-shadow: none;
+  box-shadow: 0 2px 6px rgba(20, 31, 43, 0.16);
   transition: opacity 160ms ease, transform 180ms ease, box-shadow 180ms ease;
 }
 
@@ -217,7 +217,7 @@
   background: #0b63ce;
   color: #ffffff;
   font-size: 12px;
-  box-shadow: 0 0 0 4px rgba(11, 99, 206, 0.18), 0 5px 14px rgba(20, 31, 43, 0.26);
+  box-shadow: 0 0 0 5px rgba(11, 99, 206, 0.22), 0 5px 14px rgba(20, 31, 43, 0.32);
 }
 
 .selected-marker-pulse {
@@ -402,7 +402,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.96);
   border: 2px solid rgba(11, 99, 206, 0.55);
-  color: #1e252b;
+  color: var(--label-text);
   font-size: 13px;
   font-weight: 750;
   line-height: 1.18;
@@ -430,7 +430,7 @@
   padding: 2px 4px;
   border: 0;
   background: rgba(255, 255, 255, 0.72);
-  color: rgba(51, 64, 71, 0.72);
+  color: var(--label-text);
   font-size: 10px;
   font-weight: 650;
   box-shadow: none;
@@ -526,8 +526,8 @@
 }
 
 .route-halo {
-  stroke: rgba(255, 255, 255, 0.96);
-  stroke-width: 16;
+  stroke: var(--route-halo);
+  stroke-width: 18;
   stroke-linecap: round;
   stroke-linejoin: round;
   fill: none;
@@ -536,8 +536,8 @@
 
 .route-line-real,
 .route-line-approximate {
-  stroke: #0f62fe;
-  stroke-width: 7;
+  stroke: var(--route-blue);
+  stroke-width: 8;
   stroke-linecap: round;
   stroke-linejoin: round;
   fill: none;
@@ -555,8 +555,8 @@
 }
 
 .route-line {
-  stroke: #1967d2;
-  stroke-width: 5;
+  stroke: var(--route-blue);
+  stroke-width: 6;
   stroke-dasharray: none;
 }
 
@@ -979,4 +979,57 @@
   .route-active .compass-widget {
     display: none;
   }
+}
+
+html.high-contrast .leaflet-svg-background {
+  opacity: 0.88 !important;
+  filter: contrast(1.22) saturate(1.05);
+}
+
+html.high-contrast .leaflet-feature,
+html.high-contrast .leaflet-overview-feature {
+  stroke-opacity: 1 !important;
+  fill-opacity: 0.42 !important;
+  stroke-width: 2.4px !important;
+}
+
+html.high-contrast .leaflet-feature[stroke],
+html.high-contrast .leaflet-overview-feature[stroke] {
+  stroke: var(--map-line-strong) !important;
+}
+
+html.high-contrast .leaflet-amenity {
+  border-width: 3px;
+  color: #0f1720;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.26);
+}
+
+html.high-contrast .leaflet-amenity-selected {
+  width: 38px;
+  height: 38px;
+  box-shadow: 0 0 0 6px rgba(0, 67, 206, 0.28), 0 6px 18px rgba(0, 0, 0, 0.34);
+}
+
+html.high-contrast .leaflet-room-label,
+html.high-contrast .leaflet-active-label {
+  color: var(--label-text);
+  text-shadow:
+    0 2px 0 #ffffff,
+    2px 0 0 #ffffff,
+    0 -2px 0 #ffffff,
+    -2px 0 0 #ffffff;
+}
+
+html.high-contrast .route-halo {
+  stroke-width: 22px !important;
+}
+
+html.high-contrast .route-line-real,
+html.high-contrast .route-line-approximate {
+  stroke: var(--route-blue) !important;
+  stroke-width: 9px !important;
+}
+
+html.high-contrast .route-endpoint {
+  box-shadow: 0 0 0 5px #ffffff, 0 0 0 9px rgba(0, 67, 206, 0.34);
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import AppShell from './components/AppShell.jsx';
 import { parseSvg } from './utils/parseSvg.js';
 import { generateIndoorMapData } from './utils/detectFeatures.js';
@@ -90,9 +90,46 @@ export default function App() {
   const [buildingId, setBuildingId] = useState(savedState?.building?.id || '');
   const [routeGraphs, setRouteGraphs] = useState({});
   const [connectorPreference, setConnectorPreference] = useState('any');
+  const [highContrast, setHighContrast] = useState(() => localStorage.getItem('nwt-high-contrast') === 'true');
+  const [voiceGuidance, setVoiceGuidance] = useState(() => localStorage.getItem('nwt-voice-guidance') === 'true');
   const [areaDrawingMode, setAreaDrawingMode] = useState(false);
   const [areaDraftPoints, setAreaDraftPoints] = useState([]);
   const [selectedVertexIndex, setSelectedVertexIndex] = useState(null);
+  const spokenRouteRef = useRef('');
+
+  function speakInstruction(text) {
+    if (!voiceGuidance || !text || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.95;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function currentRouteInstruction(route = activeRoute) {
+    if (!route) return '';
+    if (route.routeAvailable === false) return route.instructions?.[0]?.text || route.unavailableReason || '';
+    return route.instructions?.[0]?.text || route.notice || `Walking to ${route.destinationName}`;
+  }
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('high-contrast', highContrast);
+    localStorage.setItem('nwt-high-contrast', String(highContrast));
+  }, [highContrast]);
+
+  useEffect(() => {
+    localStorage.setItem('nwt-voice-guidance', String(voiceGuidance));
+    if (!voiceGuidance && window.speechSynthesis) window.speechSynthesis.cancel();
+  }, [voiceGuidance]);
+
+  useEffect(() => {
+    if (!voiceGuidance || !activeRoute) return;
+    const signature = `${activeRoute.id}:${activeFloorId}:${currentRouteInstruction(activeRoute)}`;
+    if (spokenRouteRef.current === signature) return;
+    spokenRouteRef.current = signature;
+    speakInstruction(currentRouteInstruction(activeRoute));
+  }, [activeRoute?.id, activeRoute?.quality, activeRoute?.routeAvailable, activeFloorId, voiceGuidance]);
 
   useEffect(() => {
     const load = isAdminUrl
@@ -652,6 +689,8 @@ export default function App() {
       activeRoute={activeRoute}
       connectorPreference={connectorPreference}
       routeDestinationId={routeDestinationId}
+      highContrast={highContrast}
+      voiceGuidance={voiceGuidance}
       buildingId={buildingId}
       adminMode={adminMode}
       published={published}
@@ -688,6 +727,9 @@ export default function App() {
       }}
       onRouteTo={startRouteTo}
       onConnectorPreferenceChange={setConnectorPreference}
+      onToggleHighContrast={() => setHighContrast((value) => !value)}
+      onToggleVoiceGuidance={() => setVoiceGuidance((value) => !value)}
+      onRepeatInstruction={() => speakInstruction(currentRouteInstruction())}
       onClearRoute={() => setRouteDestinationId('')}
       onToggleAdmin={() => setAdminMode((value) => !value)}
       onPublish={publishMap}
