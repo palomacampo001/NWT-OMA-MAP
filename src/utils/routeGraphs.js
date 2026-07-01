@@ -13,6 +13,7 @@ function formatFeatureLabel(feature) {
 }
 
 const STORAGE_KEY = 'svg-indoor-route-graphs-v1';
+const graphStatuses = new Set(['generated_suggestion', 'admin_reviewed', 'published']);
 
 function connectorType(feature) {
   const text = `${feature?.displayName || ''} ${feature?.name || ''} ${feature?.roomNumber || ''} ${feature?.category || ''}`;
@@ -45,6 +46,7 @@ export function seedRouteGraphs(floors = []) {
         type: anchor.type === 'reception' ? 'reception' : 'entrance',
         name: anchor.name,
         connectorGroupId: anchor.id,
+        source: 'generated',
       });
     }
     (floor.features || []).forEach((feature) => {
@@ -62,10 +64,13 @@ export function seedRouteGraphs(floors = []) {
         y: point.y,
         type,
         name: formatFeatureLabel(feature),
+        linkedPoiId: feature.id,
+        linkedFeatureId: feature.id,
         connectorGroupId: connectorGroupId(feature, type),
+        source: 'generated',
       });
     });
-    return [floor.id, { floorId: floor.id, nodes, edges: [] }];
+    return [floor.id, { floorId: floor.id, status: 'admin_reviewed', nodes, edges: [] }];
   }));
 }
 
@@ -80,6 +85,7 @@ export function loadRouteGraphs(floors = []) {
       const seededNodes = graph.nodes.filter((node) => !nodeIds.has(node.id));
       return [floorId, {
         floorId,
+        status: graphStatuses.has(savedGraph.status) ? savedGraph.status : 'admin_reviewed',
         nodes: [...(savedGraph.nodes || []), ...seededNodes],
         edges: savedGraph.edges || [],
       }];
@@ -91,6 +97,194 @@ export function loadRouteGraphs(floors = []) {
 
 export function saveRouteGraphs(graphs) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(graphs));
+}
+
+function featureText(feature) {
+  return `${feature?.displayName || ''} ${feature?.name || ''} ${feature?.roomNumber || ''} ${feature?.category || ''} ${feature?.type || ''}`.toLowerCase();
+}
+
+function featurePoint(feature) {
+  const point = featureCenter(feature);
+  return point ? { ...point, floorId: feature.floorId } : null;
+}
+
+function nodeDistance(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function addNode(nodes, node) {
+  if (!node || !Number.isFinite(node.x) || !Number.isFinite(node.y)) return null;
+  const existing = nodes.find((item) => nodeDistance(item, node) < 8 && item.type === node.type);
+  if (existing) return existing;
+  nodes.push(node);
+  return node;
+}
+
+function addEdge(edges, floorId, from, to, source = 'generated') {
+  if (!from || !to || from.id === to.id) return;
+  const key = [from.id, to.id].sort().join('|');
+  if (edges.some((edge) => [edge.fromNodeId, edge.toNodeId].sort().join('|') === key)) return;
+  edges.push({
+    id: `${floorId}-generated-edge-${edges.length + 1}`,
+    floorId,
+    fromNodeId: from.id,
+    toNodeId: to.id,
+    distance: nodeDistance(from, to),
+    accessible: true,
+    source,
+  });
+}
+
+function isOpenOrCorridorLike(feature, mapArea) {
+  if (feature.visible === false || feature.geometry?.type !== 'Polygon' || !feature.bbox) return false;
+  const [,, width, height] = feature.bbox;
+  const area = Math.max(1, width * height);
+  const ratio = Math.max(width, height) / Math.max(1, Math.min(width, height));
+  const text = featureText(feature);
+  const category = String(feature.category || '').toLowerCase();
+  return /corridor|circulation|aisle|lobby|reception|vestibule|entrance|open|gallery|hall|walkway|turnstile/i.test(text)
+    || ['corridor', 'lobby', 'reception', 'entrance', 'wayfinding_zone', 'meeting_area', 'custom'].includes(category)
+    || (area / Math.max(1, mapArea) > 0.018 && ratio > 2.2);
+}
+
+function usefulDestination(feature) {
+  if (feature.visible === false || feature.geometry?.type !== 'Point') return false;
+  if (connectorType(feature)) return false;
+  const text = featureText(feature);
+  if (!text.trim() || /unknown|decorative|noise/.test(text)) return false;
+  return Boolean(feature.displayName || feature.name || feature.roomNumber);
+}
+
+function nearestNode(point, nodes, filter = () => true) {
+  return nodes
+    .filter(filter)
+    .map((node) => ({ node, distance: nodeDistance(point, node) }))
+    .sort((a, b) => a.distance - b.distance)[0] || null;
+}
+
+export function generateHallwayGraph(floor) {
+  const [viewX = 0, viewY = 0, viewWidth = 1200, viewHeight = 800] = floor?.viewBox || [];
+  const mapArea = viewWidth * viewHeight;
+  const nodes = [];
+  const edges = [];
+  const features = floor?.features || [];
+  const openFeatures = features.filter((feature) => isOpenOrCorridorLike(feature, mapArea));
+
+  openFeatures.forEach((feature, index) => {
+    const point = featurePoint(feature);
+    if (!point) return;
+    const node = addNode(nodes, {
+      id: `${floor.id}-generated-hall-${index + 1}`,
+      floorId: floor.id,
+      x: point.x,
+      y: point.y,
+      type: /intersection|lobby|reception|entrance|vestibule/i.test(featureText(feature)) ? 'intersection' : 'hallway',
+      name: formatFeatureLabel(feature),
+      linkedFeatureId: feature.id,
+      source: 'generated',
+    });
+    const [x, y, width, height] = feature.bbox || [];
+    if (!node || !width || !height) return;
+    if (Math.max(width, height) > 180) {
+      const horizontal = width >= height;
+      const a = addNode(nodes, {
+        id: `${floor.id}-generated-hall-${index + 1}-a`,
+        floorId: floor.id,
+        x: horizontal ? x + width * 0.22 : point.x,
+        y: horizontal ? point.y : y + height * 0.22,
+        type: 'turn',
+        name: `${formatFeatureLabel(feature)} approach`,
+        linkedFeatureId: feature.id,
+        source: 'generated',
+      });
+      const b = addNode(nodes, {
+        id: `${floor.id}-generated-hall-${index + 1}-b`,
+        floorId: floor.id,
+        x: horizontal ? x + width * 0.78 : point.x,
+        y: horizontal ? point.y : y + height * 0.78,
+        type: 'turn',
+        name: `${formatFeatureLabel(feature)} approach`,
+        linkedFeatureId: feature.id,
+        source: 'generated',
+      });
+      addEdge(edges, floor.id, a, node);
+      addEdge(edges, floor.id, node, b);
+    }
+  });
+
+  if (!nodes.length) {
+    const center = { x: viewX + viewWidth / 2, y: viewY + viewHeight / 2 };
+    addNode(nodes, {
+      id: `${floor.id}-generated-hall-center`,
+      floorId: floor.id,
+      x: center.x,
+      y: center.y,
+      type: 'hallway',
+      name: 'Suggested hallway center',
+      source: 'generated',
+    });
+  }
+
+  const hallwayNodes = () => nodes.filter((node) => ['hallway', 'intersection', 'turn', 'doorway', 'entrance', 'reception'].includes(node.type));
+  hallwayNodes().forEach((node) => {
+    const nearby = hallwayNodes()
+      .filter((other) => other.id !== node.id)
+      .map((other) => ({ node: other, distance: nodeDistance(node, other) }))
+      .filter((item) => item.distance < Math.max(180, Math.min(viewWidth, viewHeight) * 0.28))
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 3);
+    nearby.forEach((item) => addEdge(edges, floor.id, node, item.node));
+  });
+
+  features.forEach((feature, index) => {
+    if (feature.visible === false || feature.geometry?.type !== 'Point') return;
+    const point = featurePoint(feature);
+    if (!point) return;
+    const type = connectorType(feature);
+    if (type) {
+      const connector = addNode(nodes, {
+        id: `${floor.id}-generated-connector-${index + 1}`,
+        floorId: floor.id,
+        x: point.x,
+        y: point.y,
+        type,
+        name: formatFeatureLabel(feature),
+        linkedPoiId: feature.id,
+        linkedFeatureId: feature.id,
+        connectorGroupId: connectorGroupId(feature, type),
+        source: 'generated',
+      });
+      const nearest = nearestNode(connector, hallwayNodes(), (node) => node.id !== connector.id);
+      if (nearest) addEdge(edges, floor.id, connector, nearest.node);
+    }
+  });
+
+  const destinations = features.filter(usefulDestination).slice(0, 220);
+  destinations.forEach((feature, index) => {
+    const point = featurePoint(feature);
+    if (!point) return;
+    const nearest = nearestNode(point, hallwayNodes());
+    if (!nearest) return;
+    const approach = addNode(nodes, {
+      id: `${floor.id}-generated-destination-${index + 1}`,
+      floorId: floor.id,
+      x: nearest.node.x + (point.x - nearest.node.x) * 0.18,
+      y: nearest.node.y + (point.y - nearest.node.y) * 0.18,
+      type: 'destination_approach',
+      name: `${formatFeatureLabel(feature)} approach`,
+      linkedPoiId: feature.id,
+      linkedFeatureId: feature.id,
+      source: 'generated',
+    });
+    addEdge(edges, floor.id, nearest.node, approach);
+  });
+
+  return {
+    floorId: floor.id,
+    status: 'generated_suggestion',
+    nodes,
+    edges,
+  };
 }
 
 export function nearestRouteNode(point, graph, filter = () => true) {

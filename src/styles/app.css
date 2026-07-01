@@ -456,6 +456,35 @@ p {
   gap: 10px;
 }
 
+.route-graph-status {
+  width: fit-content;
+  border: 1px solid #d1d7d3;
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: #ffffff;
+  color: #526066;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.route-graph-status-generated_suggestion {
+  border-color: #f3d28b;
+  background: #fff8e7;
+  color: #8a4b12;
+}
+
+.route-graph-status-admin_reviewed {
+  border-color: #c9dcff;
+  background: #f2f7ff;
+  color: #0f62fe;
+}
+
+.route-graph-status-published {
+  border-color: #cce8d8;
+  background: #f0f8f4;
+  color: #0f5132;
+}
+
 .route-node-list {
   display: grid;
   gap: 6px;

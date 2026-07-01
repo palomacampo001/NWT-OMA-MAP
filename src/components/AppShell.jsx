@@ -52,6 +52,7 @@ export default function AppShell({
   onDeleteAreaVertex,
   onDeleteFeature,
   onUpdateRouteGraph,
+  onGenerateRouteGraph,
   onQueryChange,
   onHighlight,
   onAddPoi,
@@ -183,7 +184,14 @@ export default function AppShell({
                   />
                 </div>
               )}
-              {adminMode && <RouteGraphEditor floor={activeFloor} graph={routeGraphs?.[activeFloorId]} onUpdateGraph={(updater) => onUpdateRouteGraph(activeFloorId, updater)} />}
+              {adminMode && (
+                <RouteGraphEditor
+                  floor={activeFloor}
+                  graph={routeGraphs?.[activeFloorId]}
+                  onUpdateGraph={(updater) => onUpdateRouteGraph(activeFloorId, updater)}
+                  onGenerateGraph={onGenerateRouteGraph}
+                />
+              )}
               {adminMode && <ExportPanel mapData={mapData} buildingId={buildingId} />}
             </>
           )}

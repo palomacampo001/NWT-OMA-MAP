@@ -2,7 +2,13 @@ import { useMemo, useState } from 'react';
 
 const nodeTypes = ['hallway', 'intersection', 'turn', 'doorway', 'destination_approach', 'entrance', 'reception', 'elevator', 'escalator', 'stair'];
 
-export default function RouteGraphEditor({ floor, graph, onUpdateGraph }) {
+function graphStatusLabel(status) {
+  if (status === 'published') return 'Published';
+  if (status === 'admin_reviewed') return 'Reviewed';
+  return 'Generated suggestion';
+}
+
+export default function RouteGraphEditor({ floor, graph, onUpdateGraph, onGenerateGraph }) {
   const [visible, setVisible] = useState(false);
   const [selected, setSelected] = useState([]);
   const [selectedEdgeId, setSelectedEdgeId] = useState('');
@@ -24,6 +30,7 @@ export default function RouteGraphEditor({ floor, graph, onUpdateGraph }) {
       y: Math.round(y + height / 2),
       type: nodeType,
       name: `${nodeType.replace('_', ' ')} node`,
+      source: 'admin',
     };
     update((current) => ({ ...current, nodes: [...current.nodes, node] }));
     setSelected([node.id]);
@@ -42,6 +49,7 @@ export default function RouteGraphEditor({ floor, graph, onUpdateGraph }) {
           fromNodeId,
           toNodeId,
           accessible: true,
+          source: 'admin',
         }],
       };
     });
@@ -104,7 +112,12 @@ export default function RouteGraphEditor({ floor, graph, onUpdateGraph }) {
     if (!file) return;
     file.text().then((text) => {
       const parsed = JSON.parse(text);
-      update(() => ({ floorId: floor.id, nodes: parsed.nodes || [], edges: parsed.edges || [] }));
+      update(() => ({
+        floorId: floor.id,
+        status: parsed.status || 'generated_suggestion',
+        nodes: parsed.nodes || [],
+        edges: parsed.edges || [],
+      }));
       setSelected([]);
     }).catch(() => {});
   }
@@ -117,6 +130,18 @@ export default function RouteGraphEditor({ floor, graph, onUpdateGraph }) {
       {visible && (
         <div className="route-graph-tools">
           <p className="muted">{nodeCount} nodes · {edgeCount} edges. Routes draw only along connected edges.</p>
+          <div className={`route-graph-status route-graph-status-${graph?.status || 'admin_reviewed'}`}>
+            {graphStatusLabel(graph?.status || 'admin_reviewed')}
+          </div>
+          <div className="tool-row">
+            <button className="primary-button" onClick={onGenerateGraph}>Generate hallway graph</button>
+            <button className="secondary-button" onClick={() => update((current) => ({ ...current, status: 'admin_reviewed' }))} disabled={!nodeCount}>
+              Save as reviewed
+            </button>
+            <button className="secondary-button" onClick={() => update((current) => ({ ...current, status: 'published' }))} disabled={!nodeCount}>
+              Publish graph
+            </button>
+          </div>
           <label>
             Node type
             <select value={nodeType} onChange={(event) => setNodeType(event.target.value)}>

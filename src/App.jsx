@@ -5,7 +5,7 @@ import { generateIndoorMapData } from './utils/detectFeatures.js';
 import { loadMapState, saveMapState } from './utils/storage.js';
 import { planIndoorRoute } from './utils/navigation.js';
 import { BUILDING_GEOFENCE, formatDistanceFeet, getDefaultStartAnchor, haversineDistanceMeters, isInsideBuildingGeofence } from './utils/locationConfig.js';
-import { loadRouteGraphs, saveRouteGraphs } from './utils/routeGraphs.js';
+import { generateHallwayGraph, loadRouteGraphs, saveRouteGraphs } from './utils/routeGraphs.js';
 import sampleMap from './data/sampleConvertedMap.json';
 import {
   createBuilding,
@@ -184,10 +184,21 @@ export default function App() {
 
   function updateRouteGraph(floorId, updater) {
     setRouteGraphs((current) => {
-      const next = { ...current, [floorId]: updater(current[floorId] || { floorId, nodes: [], edges: [] }) };
+      const next = { ...current, [floorId]: updater(current[floorId] || { floorId, status: 'admin_reviewed', nodes: [], edges: [] }) };
       saveRouteGraphs(next);
       return next;
     });
+  }
+
+  function generateActiveFloorRouteGraph() {
+    if (!activeFloor) return;
+    const graph = generateHallwayGraph(activeFloor);
+    setRouteGraphs((current) => {
+      const next = { ...current, [activeFloor.id]: graph };
+      saveRouteGraphs(next);
+      return next;
+    });
+    setStatus({ type: 'success', message: `Generated ${graph.nodes.length} hallway nodes and ${graph.edges.length} edges for review.` });
   }
 
   function selectFloor(floorId) {
@@ -664,6 +675,7 @@ export default function App() {
       onDeleteAreaVertex={deleteSelectedAreaVertex}
       onDeleteFeature={deleteSelectedFeature}
       onUpdateRouteGraph={updateRouteGraph}
+      onGenerateRouteGraph={generateActiveFloorRouteGraph}
       onQueryChange={setQuery}
       onHighlight={setHighlightId}
       onAddPoi={addPoi}

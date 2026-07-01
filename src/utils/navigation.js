@@ -158,6 +158,10 @@ function graphHasEdges(graph) {
   return Boolean(graph?.nodes?.length && graph?.edges?.length);
 }
 
+function graphCanRoute(graph) {
+  return graphHasEdges(graph) && graph.status !== 'generated_suggestion';
+}
+
 const routeWalkableTypes = new Set(['entrance', 'reception', 'hallway', 'intersection', 'turn', 'doorway', 'destination_approach', 'destination_snap']);
 
 function routeNodePoint(node) {
@@ -169,7 +173,7 @@ function nearestGraphNode(point, graph, types = routeWalkableTypes) {
 }
 
 function findDestinationApproachNode(destinationFeature, destinationPoint, graph) {
-  if (!graphHasEdges(graph)) return null;
+  if (!graphCanRoute(graph)) return null;
   const nodes = graph.nodes || [];
   const linked = nodes.find((node) => (
     node.linkedFeatureId === destinationFeature?.id
@@ -190,7 +194,7 @@ function findDestinationApproachNode(destinationFeature, destinationPoint, graph
 }
 
 function findConnectorGraphNode(connector, graph) {
-  if (!connector || !graphHasEdges(graph)) return null;
+  if (!connector || !graphCanRoute(graph)) return null;
   const type = connector.type === 'stairs' ? 'stair' : connector.type;
   const nodes = graph.nodes || [];
   const linked = nodes.find((node) => (
@@ -298,7 +302,7 @@ export function buildRoute(floor, fromPoint, destinationFeature) {
 }
 
 function graphLeg({ id, floor, graph, from, to, destinationName, instruction, connector, startConnector, endConnector, destinationFeature }) {
-  if (!graphHasEdges(graph)) return null;
+  if (!graphCanRoute(graph)) return null;
   const start = startConnector
     ? findConnectorGraphNode(startConnector, graph)
     : nearestGraphNode(from, graph);
@@ -435,7 +439,7 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
         destinationId: destinationFeature.id,
         destinationName,
         activeFloorIds: [originFloorId],
-        reason: 'Hallway route graph needed for this area. Add connected route nodes in Admin.',
+        reason: 'Hallway routing is not set up for this floor yet. Generate or edit the hallway graph in Admin.',
         legs: [leg],
       });
     }
@@ -554,7 +558,7 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
       destinationId: destinationFeature.id,
       destinationName,
       activeFloorIds: [originFloorId, destinationFloorId],
-      reason: `Hallway route graph needed for ${missing}. Add connected route nodes in Admin before routing through walls is allowed.`,
+      reason: `Hallway routing is not set up for ${missing} yet. Generate or edit the hallway graph in Admin.`,
       legs: [previewOriginLeg, previewTransfer, previewDestinationLeg],
     });
   }
