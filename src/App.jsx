@@ -124,14 +124,6 @@ export default function App() {
   }, [voiceGuidance]);
 
   useEffect(() => {
-    if (!voiceGuidance || !activeRoute) return;
-    const signature = `${activeRoute.id}:${activeFloorId}:${currentRouteInstruction(activeRoute)}`;
-    if (spokenRouteRef.current === signature) return;
-    spokenRouteRef.current = signature;
-    speakInstruction(currentRouteInstruction(activeRoute));
-  }, [activeRoute?.id, activeRoute?.quality, activeRoute?.routeAvailable, activeFloorId, voiceGuidance]);
-
-  useEffect(() => {
     const load = isAdminUrl
       ? async () => {
         const buildings = await listBuildings();
@@ -288,6 +280,15 @@ export default function App() {
       connectorPreference,
     });
   }, [mapData.floors, userLocation, routeDestination, routeDestinationFloor, routeGraphs, connectorPreference]);
+
+  useEffect(() => {
+    if (!voiceGuidance || !activeRoute) return;
+    const instruction = currentRouteInstruction(activeRoute);
+    const signature = `${activeRoute.id}:${activeFloorId}:${instruction}`;
+    if (spokenRouteRef.current === signature) return;
+    spokenRouteRef.current = signature;
+    speakInstruction(instruction);
+  }, [activeRoute?.id, activeRoute?.quality, activeRoute?.routeAvailable, activeFloorId, voiceGuidance]);
 
   function updateFloor(floorId, updater) {
     setMapData((current) => ({
