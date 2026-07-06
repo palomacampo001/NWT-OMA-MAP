@@ -1,87 +1,142 @@
-# SVG Indoor Map Converter
+# No Wrong Turns / SVG Indoor Map App
 
-Local indoor map admin + public viewer prototype.
+This project is the current working indoor map web app for the IBM OMA building. It renders prepared indoor floor data in a Leaflet-based map viewer, supports public navigation and admin editing, and preserves the current visual behavior of the stakeholder demo.
+
+The app was originally called "SVG Indoor Map Converter"; the current user-facing name is **No Wrong Turns**. The home-screen shortcut name is **NWT OMA**.
+
+## What Is Included
+
+- React/Vite frontend in `src/`
+- Leaflet indoor map viewer using `CRS.Simple`
+- Express API in `server/src/`
+- Vercel serverless entrypoint in `api/index.js`
+- File-backed database at `server/data/indoor-map-db.json`
+- Prepared OMA floor assets in `work/`
+- Published static fallback map at `public/published-map.json`
+- App icons and manifest in `public/`
+- Handoff documentation in `docs/`
+
+## Important Preservation Notes
+
+Do not casually regenerate the prepared floor data. The current OMA map depends on prepared clean SVG backgrounds plus prepared GeoJSON/features. The original raw CAD/Illustrator SVG parsing path produced broken "spiderweb" geometry and should not be used for the stable OMA floors unless a developer is intentionally rebuilding the data pipeline.
+
+The current stable behavior includes:
+
+- Floor 1, Floor 2, Floor 8, Floor 9, Floor 10
+- Progressive map detail by zoom level
+- Public and admin views
+- Search and destination routing
+- Mobile layout and bottom navigation drawer
+- High contrast and voice guidance controls
+- Admin POI, area, and route graph tools
+- Floor 1 corrected Main IBM Entrance / Lobby start area
+- Omaha-specific vertical routing rules
+
+## Requirements
+
+- Node.js 20+ recommended
+- npm or pnpm
+
+This repo includes `pnpm-lock.yaml`. Either package manager can run it, but pnpm is closest to the current development setup.
+
+## Install
+
+```bash
+cd svg-indoor-map-app
+pnpm install
+```
+
+If Bob uses npm:
+
+```bash
+cd svg-indoor-map-app
+npm install
+```
 
 ## Run Locally
 
-```bash
-npm install
-npm run dev
-```
-
-The app runs:
-
-- Backend API: `http://localhost:4000`
-- Admin/client app: `http://localhost:5173`
-- Admin mode: `http://localhost:5173/?admin=1`
-- Phone/client mode on same Wi-Fi: `http://192.168.68.181:5173/`
-
-If using pnpm directly in this Codex environment:
+Using pnpm:
 
 ```bash
-pnpm install
 pnpm run dev
 ```
 
-## Backend
+Using npm:
 
-The backend is an Express REST API under `server/src`.
-
-It includes:
-
-- Buildings
-- Floors
-- Uploaded SVG storage
-- Server-side SVG conversion into map features
-- Feature editing
-- Search
-- GeoJSON export
-- Indoor map JSON export
-- QR anchors
-- Route nodes and edges
-- Dijkstra routing when graph data exists
-- Versioning and publish workflow
-
-The requested Prisma schema is included at `server/prisma/schema.prisma`. The local MVP runtime uses `server/data/indoor-map-db.json` as a file-backed store because the local Prisma schema engine failed in this environment. The API shape remains aligned with the Prisma models so it can be switched to SQLite/Postgres later.
-
-## Admin Workflow
-
-1. Open `http://localhost:5173/?admin=1`.
-2. Upload one or more SVG files.
-3. Each SVG becomes a backend floor.
-4. The backend stores the SVG and detected features.
-5. Review/edit detected features in the inspector.
-6. Use export buttons for indoor JSON or GeoJSON.
-7. Click **Publish map**.
-
-## Public Workflow
-
-1. Open `http://localhost:5173/` or the Wi-Fi URL on a phone.
-2. The viewer loads the published backend map.
-3. Search for a destination.
-4. Set your location or use QR anchors when configured.
-5. Routing will only run when route nodes and edges exist.
-
-If no route graph exists, the backend returns:
-
-```json
-{
-  "status": "not_available",
-  "message": "Routing requires route nodes and edges to be created for this floor."
-}
+```bash
+npm run dev
 ```
 
-## Key API Endpoints
+Local URLs:
 
-- `GET /api/buildings`
-- `POST /api/buildings`
-- `GET /api/buildings/:buildingId/floors`
-- `POST /api/buildings/:buildingId/floors`
-- `POST /api/floors/:floorId/upload-svg`
-- `GET /api/floors/:floorId/features`
-- `PATCH /api/features/:featureId`
-- `GET /api/search?buildingId=...&q=...`
-- `GET /api/buildings/:buildingId/geojson`
-- `GET /api/buildings/:buildingId/indoor-map-json`
-- `POST /api/buildings/:buildingId/publish`
-- `GET /api/public/published-map`
+- Public map: `http://localhost:5173/`
+- Admin view: `http://localhost:5173/?admin=1`
+- Backend API: `http://localhost:4000/`
+- Published map API: `http://localhost:4000/api/public/published-map`
+
+If the combined dev command has trouble finding `npm` inside a constrained environment, run the two processes separately:
+
+```bash
+node server/src/server.js
+pnpm run dev:client
+```
+
+## Build
+
+```bash
+pnpm run build
+```
+
+Build output goes to `dist/`.
+
+## Deploy
+
+The current deployment target is Vercel. The project includes `vercel.json`.
+
+Known live URLs at handoff time:
+
+- Public: `https://files-mentioned-by-the-user-build-seven.vercel.app/`
+- Admin: `https://files-mentioned-by-the-user-build-seven.vercel.app/?admin=1`
+
+Deploy command:
+
+```bash
+pnpm dlx vercel --prod
+```
+
+## Data Locations
+
+- Current backend database: `server/data/indoor-map-db.json`
+- Static published fallback: `public/published-map.json`
+- Prepared package files: `work/`
+- Route graph browser storage key: `svg-indoor-route-graphs-v1`
+- Local map browser storage key: see `src/utils/storage.js`
+
+## Docs To Read First
+
+1. `docs/HANDOFF.md`
+2. `docs/ARCHITECTURE.md`
+3. `docs/ROUTING_RULES.md`
+4. `docs/FLOOR_ASSETS.md`
+5. `docs/KNOWN_LIMITATIONS.md`
+
+## Smoke Test
+
+- [ ] App starts locally
+- [ ] Floor 1 loads
+- [ ] Floor 2 loads
+- [ ] Floor 8 loads
+- [ ] Floor 9 loads
+- [ ] Floor 10 loads
+- [ ] Floor tabs switch correctly
+- [ ] Low zoom shows simplified blocks
+- [ ] Zooming in reveals detail
+- [ ] Search works
+- [ ] POIs are not all visible by default
+- [ ] Selected labels show full names
+- [ ] Floor 1 corrected entrance/lobby appears at bottom-left
+- [ ] Non-working Floor 1 elevator is not used for routing
+- [ ] Public view works
+- [ ] Admin view works
+- [ ] Mobile layout works
+- [ ] No spiderweb lines appear
