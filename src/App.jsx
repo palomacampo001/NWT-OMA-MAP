@@ -576,20 +576,12 @@ export default function App() {
     setSelectedId(feature.id);
     setHighlightId(feature.id);
     setRouteDestinationId(feature.id);
-    if (!userLocation && floorId) {
-      const entrance = getDefaultStartAnchor(mapData.floors);
-      if (entrance) {
-        setActiveFloorId(entrance.floorId);
-        setUserLocation({ floorId: entrance.floorId, point: entrance.mapPoint, approximate: true });
-        setLocationState({
-          mode: 'indoorAnchored',
-          floorId: entrance.floorId,
-          mapPoint: entrance.mapPoint,
-          message: 'Starting from the highlighted entrance. Confirm your indoor position for best accuracy.',
-        });
-      } else {
-        setActiveFloorId(floorId);
-      }
+    if (!userLocation) {
+      setLocatingMode(true);
+      setLocationState({
+        mode: 'chooseIndoorStart',
+        message: 'Choose your current floor, then tap your position on the map to start navigation.',
+      });
     }
   }
 
@@ -701,6 +693,7 @@ export default function App() {
         if (floorId) selectFloor(floorId);
         setSelectedId(feature?.id || '');
         setHighlightId(feature?.id || '');
+        if (!adminMode && feature?.geometry?.type === 'Point') startRouteTo(feature, floorId);
       }}
       onHoverFeature={setHoveredId}
       onUpdateFeature={updateFeature}

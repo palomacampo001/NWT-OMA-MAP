@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PUBLIC_MAP = ROOT / "public" / "published-map.json"
 SERVER_DB = ROOT / "server" / "data" / "indoor-map-db.json"
 IMAGE_DIR = ROOT / "public" / "directory-map"
-GRID_STEP = 42
+GRID_STEP = 28
 BLACK_LIMIT = 42
 
 
@@ -101,6 +101,34 @@ def nearest_node(point: tuple[float, float], nodes: list[dict]) -> dict:
     return min(nodes, key=lambda node: math.hypot(node["x"] - point[0], node["y"] - point[1]))
 
 
+def keep_largest_connected_hallway(nodes: list[dict], edges: list[dict]) -> tuple[list[dict], list[dict]]:
+    by_id = {node["id"]: node for node in nodes}
+    adjacency = {node_id: [] for node_id in by_id}
+    for edge in edges:
+        if edge["fromNodeId"] in adjacency and edge["toNodeId"] in adjacency:
+            adjacency[edge["fromNodeId"]].append(edge["toNodeId"])
+            adjacency[edge["toNodeId"]].append(edge["fromNodeId"])
+    unseen = set(adjacency)
+    components: list[set[str]] = []
+    while unseen:
+        start = unseen.pop()
+        component = {start}
+        queue = [start]
+        while queue:
+            current = queue.pop()
+            for neighbor in adjacency[current]:
+                if neighbor in unseen:
+                    unseen.remove(neighbor)
+                    component.add(neighbor)
+                    queue.append(neighbor)
+        components.append(component)
+    keep = max(components, key=len) if components else set()
+    return (
+        [node for node in nodes if node["id"] in keep],
+        [edge for edge in edges if edge["fromNodeId"] in keep and edge["toNodeId"] in keep],
+    )
+
+
 def graph_for_floor(floor: dict) -> dict:
     level = str(floor["levelNumber"]).zfill(2)
     image_path = IMAGE_DIR / f"floor-{level}-directory-map.png"
@@ -145,6 +173,8 @@ def graph_for_floor(floor: dict) -> dict:
 
     if not nodes:
         raise RuntimeError(f"No interior black hallway pixels found for {floor_id}")
+
+    nodes, edges = keep_largest_connected_hallway(nodes, edges)
 
     for feature in floor.get("features", []):
         if feature.get("visible") is False:

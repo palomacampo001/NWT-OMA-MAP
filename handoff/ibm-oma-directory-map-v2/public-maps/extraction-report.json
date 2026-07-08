@@ -6,40 +6,40 @@
       "labels": 40,
       "pois": 40,
       "spaces": 24,
-      "routeNodes": 1233,
-      "routeEdges": 3779
+      "routeNodes": 2172,
+      "routeEdges": 7314
     },
     {
       "floor": "Floor 7",
       "labels": 103,
       "pois": 103,
       "spaces": 47,
-      "routeNodes": 1042,
-      "routeEdges": 2564
+      "routeNodes": 1235,
+      "routeEdges": 3334
     },
     {
       "floor": "Floor 8",
       "labels": 130,
       "pois": 130,
       "spaces": 49,
-      "routeNodes": 1244,
-      "routeEdges": 3245
+      "routeNodes": 1550,
+      "routeEdges": 4322
     },
     {
       "floor": "Floor 9",
       "labels": 143,
       "pois": 143,
       "spaces": 56,
-      "routeNodes": 1188,
-      "routeEdges": 2974
+      "routeNodes": 1243,
+      "routeEdges": 3290
     },
     {
       "floor": "Floor 10",
       "labels": 9,
       "pois": 9,
       "spaces": 10,
-      "routeNodes": 542,
-      "routeEdges": 1631
+      "routeNodes": 927,
+      "routeEdges": 3094
     }
   ],
   "limitations": [

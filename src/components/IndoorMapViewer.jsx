@@ -233,8 +233,10 @@ function isMajorPoi(feature) {
 function shouldRenderPoi(feature, { selectedId, highlightId, zoomLevel, baseZoom, activeRoute, layerOptions }) {
   const active = feature.id === selectedId || feature.id === highlightId;
   const lod = lodForZoom(zoomLevel, baseZoom);
+  const directoryLabel = feature.sourceSvg?.source === 'directory-pdf-v2';
   if (active) return true;
   if (activeRoute && layerOptions.hideClutterDuringNavigation) return false;
+  if (directoryLabel) return true;
   if (layerOptions.showAllPois) return true;
   if (layerOptions.showMajorPois && isMajorPoi(feature)) return true;
   return layerOptions.showRoomLabels && lod.isVeryHigh && feature.category === 'room_label';
@@ -416,18 +418,20 @@ export default function IndoorMapViewer({
     const map = mapRef.current;
     const container = map?.getContainer();
     if (!map || !container) return undefined;
-    if (areaDrawingMode) {
+    if (areaDrawingMode || locatingMode) {
       map.dragging.disable();
-      container.classList.add('drawing-area-active');
+      container.classList.add(areaDrawingMode ? 'drawing-area-active' : 'location-picking-active');
     } else {
       map.dragging.enable();
       container.classList.remove('drawing-area-active');
+      container.classList.remove('location-picking-active');
     }
     return () => {
       map.dragging.enable();
       container.classList.remove('drawing-area-active');
+      container.classList.remove('location-picking-active');
     };
-  }, [areaDrawingMode]);
+  }, [areaDrawingMode, locatingMode]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -544,14 +548,24 @@ export default function IndoorMapViewer({
       const hovered = feature.id === hoveredId;
       if (feature.geometry.type === 'Point') {
         if (!shouldRenderPoi(feature, { selectedId, highlightId, zoomLevel, baseZoom, activeRoute, layerOptions })) return;
+        const directoryLabel = feature.sourceSvg?.source === 'directory-pdf-v2';
         const major = majorPoiCategories.has(feature.category);
         const variant = active ? 'selected' : major ? 'major' : 'tiny';
+        const hitWidth = Math.max(34, Math.min(140, feature.bbox?.[2] || 44));
+        const hitHeight = Math.max(26, Math.min(64, feature.bbox?.[3] || 32));
         const marker = L.marker(latLng(feature.geometry.coordinates), {
           pane: active ? 'endpointPane' : major ? 'majorPoiPane' : 'labelPane',
-          interactive: !areaDrawingMode,
-          icon: L.divIcon({ className: '', html: markerHtml(feature, variant), iconSize: active ? [34, 34] : major ? [20, 20] : [6, 6], iconAnchor: active ? [17, 17] : major ? [10, 10] : [3, 3] }),
+          interactive: !areaDrawingMode && !locatingMode,
+          icon: directoryLabel && !active
+            ? L.divIcon({
+              className: '',
+              html: `<div class="leaflet-pdf-label-hit" title="Go to ${getFeatureTitle(feature).replace(/"/g, '&quot;')}"></div>`,
+              iconSize: [hitWidth, hitHeight],
+              iconAnchor: [hitWidth / 2, hitHeight / 2],
+            })
+            : L.divIcon({ className: '', html: markerHtml(feature, variant), iconSize: active ? [34, 34] : major ? [20, 20] : [6, 6], iconAnchor: active ? [17, 17] : major ? [10, 10] : [3, 3] }),
         });
-        if (!areaDrawingMode) {
+        if (!areaDrawingMode && !locatingMode) {
           marker.on('click', () => onSelectFeature(feature));
           marker.on('mouseover', () => onHoverFeature(feature.id));
         }
@@ -599,7 +613,7 @@ export default function IndoorMapViewer({
         addLabel(group, feature, center, 'quiet');
       }
     });
-  }, [visualFeatures, selectedId, hoveredId, highlightId, onSelectFeature, onHoverFeature, viewBox, zoomLevel, baseZoom, floorAccent, lod.isLow, lod.isVeryHigh, activeRoute, layerOptions, areaDrawingMode]);
+  }, [visualFeatures, selectedId, hoveredId, highlightId, onSelectFeature, onHoverFeature, viewBox, zoomLevel, baseZoom, floorAccent, lod.isLow, lod.isVeryHigh, activeRoute, layerOptions, areaDrawingMode, locatingMode]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -845,6 +859,20 @@ export default function IndoorMapViewer({
     onAddAreaPoint?.({ x: latlng.lng, y: latlng.lat });
   }
 
+  function captureLocationPoint(event) {
+    const map = mapRef.current;
+    const host = hostRef.current;
+    if (!map || !host) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const rect = host.getBoundingClientRect();
+    const containerPoint = L.point(event.clientX - rect.left, event.clientY - rect.top);
+    const point = map.containerPointToLatLng(containerPoint);
+    onSetLocation?.({ x: point.lng, y: point.lat });
+    setTrackingMode(true);
+    map.setView(point, Math.max(map.getZoom(), 0));
+  }
+
   return (
     <div className={['map-viewer leaflet-viewer', addPoiMode || locatingMode ? 'adding-poi' : '', floorTransitioning ? 'floor-layer-enter' : ''].filter(Boolean).join(' ')}>
       <div className="leaflet-map-host" ref={hostRef} />
@@ -858,6 +886,18 @@ export default function IndoorMapViewer({
           }}
           onClick={captureAreaPoint}
           aria-label="Place area boundary point"
+        />
+      )}
+      {locatingMode && !areaDrawingMode && (
+        <button
+          type="button"
+          className="area-click-capture location-click-capture"
+          onPointerDown={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+          }}
+          onClick={captureLocationPoint}
+          aria-label={`Set your position on ${floor?.name || 'this floor'}`}
         />
       )}
       {(floor?.svgBackground || floor?.svgBackgroundUrl) && visualFeatures.length === 0 && (
