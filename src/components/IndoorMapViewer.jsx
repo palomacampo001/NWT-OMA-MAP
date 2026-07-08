@@ -191,6 +191,11 @@ function backgroundOpacityForZoom(zoom, baseZoom) {
   return 0.6;
 }
 
+function backgroundOpacityForFloor(floor, zoom, baseZoom) {
+  if (String(floor?.id || '').startsWith('floor-directory-')) return 1;
+  return backgroundOpacityForZoom(zoom, baseZoom);
+}
+
 function overviewStyleForZoom({ active, hovered, accent, zoom, baseZoom }) {
   const lod = lodForZoom(zoom, baseZoom);
   if (active) {
@@ -507,7 +512,7 @@ export default function IndoorMapViewer({
     const url = floor.svgBackgroundUrl || URL.createObjectURL(new Blob([floor.svgBackground], { type: 'image/svg+xml' }));
     backgroundUrlRef.current = url;
     backgroundRef.current = L.imageOverlay(url, bounds, {
-      opacity: backgroundOpacityForZoom(zoomLevel, baseZoom),
+      opacity: backgroundOpacityForFloor(floor, zoomLevel, baseZoom),
       interactive: false,
       pane: 'detailSvgPane',
       className: 'leaflet-svg-background',
@@ -526,8 +531,8 @@ export default function IndoorMapViewer({
   }, [floor?.id, floor?.svgBackground, floor?.svgBackgroundUrl, viewBox, baseZoom]);
 
   useEffect(() => {
-    if (backgroundRef.current) backgroundRef.current.setOpacity(backgroundOpacityForZoom(zoomLevel, baseZoom));
-  }, [zoomLevel, baseZoom]);
+    if (backgroundRef.current) backgroundRef.current.setOpacity(backgroundOpacityForFloor(floor, zoomLevel, baseZoom));
+  }, [floor, zoomLevel, baseZoom]);
 
   useEffect(() => {
     const map = mapRef.current;

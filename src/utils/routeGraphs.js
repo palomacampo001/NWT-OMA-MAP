@@ -79,6 +79,11 @@ export function loadRouteGraphs(floors = []) {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     return Object.fromEntries(Object.entries(seeded).map(([floorId, graph]) => {
+      const floor = floors.find((item) => item.id === floorId);
+      const preparedGraph = floor?.routeGraph;
+      if (preparedGraph?.status === 'published' && preparedGraph?.nodes?.length && preparedGraph?.edges?.length) {
+        return [floorId, preparedGraph];
+      }
       const savedGraph = saved[floorId];
       if (!savedGraph) return [floorId, graph];
       const nodeIds = new Set(savedGraph.nodes?.map((node) => node.id) || []);
@@ -308,19 +313,23 @@ export function shortestGraphPath(graph, startNodeId, endNodeId) {
   });
   const distances = new Map(graph.nodes.map((node) => [node.id, Number.POSITIVE_INFINITY]));
   const previous = new Map();
-  const unvisited = new Set(graph.nodes.map((node) => node.id));
+  const visited = new Set();
+  const queue = [];
   distances.set(startNodeId, 0);
-  while (unvisited.size) {
-    const current = [...unvisited].sort((a, b) => distances.get(a) - distances.get(b))[0];
-    if (!current || distances.get(current) === Number.POSITIVE_INFINITY) break;
+  queue.push({ id: startNodeId, score: 0 });
+  while (queue.length) {
+    queue.sort((a, b) => a.score - b.score);
+    const current = queue.shift()?.id;
+    if (!current || visited.has(current)) continue;
     if (current === endNodeId) break;
-    unvisited.delete(current);
+    visited.add(current);
     adjacency.get(current).forEach((next) => {
-      if (!unvisited.has(next.id)) return;
+      if (visited.has(next.id)) return;
       const score = distances.get(current) + next.weight;
       if (score < distances.get(next.id)) {
         distances.set(next.id, score);
         previous.set(next.id, current);
+        queue.push({ id: next.id, score });
       }
     });
   }

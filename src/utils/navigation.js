@@ -72,7 +72,8 @@ function floorByLevel(floors, level) {
 }
 
 function isNamedElevator(featureOrConnector) {
-  return /\b\d{2}EL\d{2,}\b/i.test(connectorName(featureOrConnector).replace(/[-_]/g, ' '));
+  const name = connectorName(featureOrConnector).replace(/[-_]/g, ' ');
+  return /\b\d{2}EL\d{2,}\b/i.test(name) || /elevator lobby/i.test(name);
 }
 
 function isFloorOneRegistrationElevator(connector) {
