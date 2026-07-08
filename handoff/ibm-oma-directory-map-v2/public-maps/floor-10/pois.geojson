@@ -1,0 +1,212 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "floor-10-poi-terrace",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          864,
+          379.21
+        ]
+      },
+      "properties": {
+        "id": "floor-10-poi-terrace",
+        "name": "Terrace",
+        "roomNumber": "",
+        "floorId": "floor-directory-10",
+        "category": "terrace",
+        "icon": "trees",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-10-poi-servery",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          863.52,
+          1792.04
+        ]
+      },
+      "properties": {
+        "id": "floor-10-poi-servery",
+        "name": "Servery",
+        "roomNumber": "",
+        "floorId": "floor-directory-10",
+        "category": "servery",
+        "icon": "utensils",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-10-poi-auditorium",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          810,
+          2564.78
+        ]
+      },
+      "properties": {
+        "id": "floor-10-poi-auditorium",
+        "name": "Auditorium",
+        "roomNumber": "",
+        "floorId": "floor-directory-10",
+        "category": "auditorium",
+        "icon": "presentation",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-10-poi-elevator-lobby",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1035,
+          1320
+        ]
+      },
+      "properties": {
+        "id": "floor-10-poi-elevator-lobby",
+        "name": "Elevator Lobby",
+        "roomNumber": "",
+        "floorId": "floor-directory-10",
+        "category": "elevator_lobby",
+        "icon": "panel-top",
+        "searchable": true,
+        "accessible": true,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-10-stairs",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          875,
+          1370
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-10-stairs",
+        "name": "Stairs",
+        "roomNumber": "",
+        "floorId": "floor-directory-10",
+        "category": "stairs",
+        "icon": "stairs",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-10-dining",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          850,
+          1040
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-10-dining",
+        "name": "Dining",
+        "roomNumber": "",
+        "floorId": "floor-directory-10",
+        "category": "dining",
+        "icon": "utensils",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-10-all-gender-toilets",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1050,
+          1210
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-10-all-gender-toilets",
+        "name": "All-Gender Toilets",
+        "roomNumber": "",
+        "floorId": "floor-directory-10",
+        "category": "restroom_all_gender",
+        "icon": "toilet",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-10-women-toilets",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1110,
+          2460
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-10-women-toilets",
+        "name": "Women Toilets",
+        "roomNumber": "",
+        "floorId": "floor-directory-10",
+        "category": "restroom_women",
+        "icon": "person-standing",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-10-men-toilets",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1110,
+          2550
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-10-men-toilets",
+        "name": "Men Toilets",
+        "roomNumber": "",
+        "floorId": "floor-directory-10",
+        "category": "restroom_men",
+        "icon": "person-standing",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    }
+  ]
+}

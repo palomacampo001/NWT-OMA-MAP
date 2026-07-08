@@ -9,6 +9,7 @@ function matchFeature(feature, query) {
 
 const connectorOptions = [
   { value: 'any', label: 'Best' },
+  { value: 'accessible', label: 'Accessible' },
   { value: 'elevator', label: 'Elevator' },
   { value: 'escalator', label: 'Escalator' },
   { value: 'stairs', label: 'Stairs' },

@@ -67,13 +67,14 @@ export default function NavigationDrawer({
             <Navigation size={24} />
           </div>
           <div>
+            {route.accessible && <span className="accessible-route-badge">Accessible route</span>}
             <strong>{route.routeAvailable === false ? 'No walkable route yet' : `${Math.round(route.distance)} map units`}</strong>
             <span>
               {route.routeAvailable === false
                 ? route.unavailableReason
                 : ['approximateGuidance', 'previewGuidance'].includes(route.quality)
                   ? 'Preview guidance. Follow visible hallways.'
-                  : 'Hallway route shown.'}
+                  : route.accessible ? 'Accessible hallway route shown.' : 'Hallway route shown.'}
             </span>
           </div>
         </div>

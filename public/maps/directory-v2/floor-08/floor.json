@@ -1,0 +1,18 @@
+{
+  "id": "floor-directory-08",
+  "name": "Floor 8",
+  "levelNumber": 8,
+  "viewBox": [
+    0,
+    0,
+    2160,
+    3240
+  ],
+  "background": "background.png",
+  "spaces": "spaces.geojson",
+  "hallways": "hallways.geojson",
+  "pois": "pois.geojson",
+  "labels": "labels.geojson",
+  "routeGraph": "route-graph.json",
+  "source": "directory-pdf"
+}

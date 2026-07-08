@@ -300,12 +300,13 @@ export function nearestRouteNode(point, graph, filter = () => true) {
     .sort((a, b) => a.distance - b.distance)[0]?.node || null;
 }
 
-export function shortestGraphPath(graph, startNodeId, endNodeId) {
+export function shortestGraphPath(graph, startNodeId, endNodeId, { accessibleOnly = false } = {}) {
   if (!graph || !startNodeId || !endNodeId) return null;
   if (startNodeId === endNodeId) return [graph.nodes.find((node) => node.id === startNodeId)].filter(Boolean);
   const byId = new Map(graph.nodes.map((node) => [node.id, node]));
   const adjacency = new Map(graph.nodes.map((node) => [node.id, []]));
   graph.edges.forEach((edge) => {
+    if (accessibleOnly && edge.accessible === false) return;
     if (!byId.has(edge.fromNodeId) || !byId.has(edge.toNodeId)) return;
     const weight = edge.distance || distance(byId.get(edge.fromNodeId), byId.get(edge.toNodeId));
     adjacency.get(edge.fromNodeId).push({ id: edge.toNodeId, weight });

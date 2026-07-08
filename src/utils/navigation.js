@@ -51,6 +51,7 @@ function connectorTypeLabel(type) {
 
 function connectorPreferenceLabel(type) {
   if (type === 'any') return 'elevator, escalator, or stair';
+  if (type === 'accessible') return 'accessible elevator';
   return connectorTypeLabel(type);
 }
 
@@ -366,7 +367,7 @@ export function buildRoute(floor, fromPoint, destinationFeature) {
   };
 }
 
-function graphLeg({ id, floor, graph, from, to, destinationName, instruction, connector, startConnector, endConnector, destinationFeature }) {
+function graphLeg({ id, floor, graph, from, to, destinationName, instruction, connector, startConnector, endConnector, destinationFeature, accessibleOnly = false }) {
   if (!graphCanRoute(graph)) return null;
   const start = startConnector
     ? findConnectorGraphNode(startConnector, graph)
@@ -376,7 +377,7 @@ function graphLeg({ id, floor, graph, from, to, destinationName, instruction, co
     : destinationFeature
       ? findDestinationApproachNode(destinationFeature, to, graph)
       : nearestGraphNode(to, graph);
-  const nodePath = shortestGraphPath(graph, start?.id, end?.id);
+  const nodePath = shortestGraphPath(graph, start?.id, end?.id, { accessibleOnly });
   if (!nodePath?.length) return null;
   const graphPoints = nodesToPoints(nodePath);
   const points = dedupePath(graphPoints);
@@ -467,7 +468,7 @@ function findConnector(floor, { type, preferred = [] } = {}) {
   return candidates[0];
 }
 
-function makeWalkLeg({ id, floor, graph, from, to, destinationName, instruction, connector, startConnector, endConnector, destinationFeature }) {
+function makeWalkLeg({ id, floor, graph, from, to, destinationName, instruction, connector, startConnector, endConnector, destinationFeature, accessibleOnly = false }) {
   return graphLeg({
     id,
     floor,
@@ -480,6 +481,7 @@ function makeWalkLeg({ id, floor, graph, from, to, destinationName, instruction,
     startConnector,
     endConnector,
     destinationFeature,
+    accessibleOnly,
   }) || previewLeg({
     id: `${id}-preview`,
     floor,
@@ -844,7 +846,9 @@ function bestConnectorPair({ floors, originFloorId, destinationFloorId, originPo
       pairs.push({ origin, destination, score: keyBonus + typeBonus + layoutDistance + accessDistance * 0.08 });
     });
   });
-  const preferredPairs = connectorPreference === 'any' ? pairs : pairs.filter((pair) => pair.origin.type === connectorPreference);
+  const preferredPairs = connectorPreference === 'any'
+    ? pairs
+    : pairs.filter((pair) => pair.origin.type === (connectorPreference === 'accessible' ? 'elevator' : connectorPreference));
   return preferredPairs.sort((a, b) => a.score - b.score)[0] || null;
 }
 
@@ -865,6 +869,7 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
       to: destinationPoint,
       destinationName,
       destinationFeature,
+      accessibleOnly: connectorPreference === 'accessible',
       instruction: `Continue to ${destinationName}.`,
     });
     if (!graphRoute) {
@@ -903,7 +908,8 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
       legs: [leg],
       activeFloorIds: [originFloorId],
       instructions: leg.instructions,
-      notice: 'Hallway route shown.',
+      accessible: connectorPreference === 'accessible',
+      notice: connectorPreference === 'accessible' ? 'Accessible hallway route shown.' : 'Hallway route shown.',
     };
   }
 
@@ -917,7 +923,13 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
     routeGraphs,
     connectorPreference,
   });
-  if (buildingRoute) return buildingRoute;
+  if (buildingRoute) {
+    return {
+      ...buildingRoute,
+      accessible: connectorPreference === 'accessible',
+      notice: connectorPreference === 'accessible' ? 'Accessible route via elevator.' : buildingRoute.notice,
+    };
+  }
 
   const pair = bestConnectorPair({ floors, originFloorId, destinationFloorId, originPoint, destinationPoint, connectorPreference });
   if (!pair) {

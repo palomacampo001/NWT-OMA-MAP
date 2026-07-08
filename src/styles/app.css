@@ -789,6 +789,14 @@ p {
   margin-top: 2px;
 }
 
+.drawer-summary .accessible-route-badge {
+  width: fit-content;
+  margin: 0 0 4px;
+  color: #075f3c;
+  font-size: 12px;
+  font-weight: 750;
+}
+
 .direction-list {
   margin: 0;
   padding-left: 22px;

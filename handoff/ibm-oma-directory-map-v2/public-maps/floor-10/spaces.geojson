@@ -1,0 +1,395 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "floor-directory-10-zone_b-1",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              328,
+              128
+            ],
+            [
+              1832,
+              128
+            ],
+            [
+              1832,
+              3096
+            ],
+            [
+              328,
+              3096
+            ],
+            [
+              328,
+              128
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-10-zone_b-1",
+        "floorId": "floor-directory-10",
+        "name": "Zone B",
+        "category": "zone_b",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-10-zone_c-2",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              752,
+              1152
+            ],
+            [
+              976,
+              1152
+            ],
+            [
+              976,
+              1192
+            ],
+            [
+              752,
+              1192
+            ],
+            [
+              752,
+              1152
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-10-zone_c-2",
+        "floorId": "floor-directory-10",
+        "name": "Zone C",
+        "category": "zone_c",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-10-zone_c-3",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1064,
+              1184
+            ],
+            [
+              1488,
+              1184
+            ],
+            [
+              1488,
+              1192
+            ],
+            [
+              1064,
+              1192
+            ],
+            [
+              1064,
+              1184
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-10-zone_c-3",
+        "floorId": "floor-directory-10",
+        "name": "Zone C",
+        "category": "zone_c",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-10-amenity-4",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1064,
+              1192
+            ],
+            [
+              1168,
+              1192
+            ],
+            [
+              1168,
+              1256
+            ],
+            [
+              1064,
+              1256
+            ],
+            [
+              1064,
+              1192
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-10-amenity-4",
+        "floorId": "floor-directory-10",
+        "name": "Amenity",
+        "category": "amenity",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-10-zone_c-5",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1064,
+              1256
+            ],
+            [
+              1488,
+              1256
+            ],
+            [
+              1488,
+              1264
+            ],
+            [
+              1064,
+              1264
+            ],
+            [
+              1064,
+              1256
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-10-zone_c-5",
+        "floorId": "floor-directory-10",
+        "name": "Zone C",
+        "category": "zone_c",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-10-amenity-6",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1168,
+              1512
+            ],
+            [
+              1344,
+              1512
+            ],
+            [
+              1344,
+              1600
+            ],
+            [
+              1168,
+              1600
+            ],
+            [
+              1168,
+              1512
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-10-amenity-6",
+        "floorId": "floor-directory-10",
+        "name": "Amenity",
+        "category": "amenity",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-10-amenity-7",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              936,
+              2016
+            ],
+            [
+              1064,
+              2016
+            ],
+            [
+              1064,
+              2104
+            ],
+            [
+              936,
+              2104
+            ],
+            [
+              936,
+              2016
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-10-amenity-7",
+        "floorId": "floor-directory-10",
+        "name": "Amenity",
+        "category": "amenity",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-10-amenity-8",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              992,
+              2216
+            ],
+            [
+              1064,
+              2216
+            ],
+            [
+              1064,
+              2320
+            ],
+            [
+              992,
+              2320
+            ],
+            [
+              992,
+              2216
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-10-amenity-8",
+        "floorId": "floor-directory-10",
+        "name": "Amenity",
+        "category": "amenity",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-10-amenity-9",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1168,
+              2416
+            ],
+            [
+              1344,
+              2416
+            ],
+            [
+              1344,
+              2592
+            ],
+            [
+              1168,
+              2592
+            ],
+            [
+              1168,
+              2416
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-10-amenity-9",
+        "floorId": "floor-directory-10",
+        "name": "Amenity",
+        "category": "amenity",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-10-amenity-10",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              992,
+              2824
+            ],
+            [
+              1064,
+              2824
+            ],
+            [
+              1064,
+              2936
+            ],
+            [
+              992,
+              2936
+            ],
+            [
+              992,
+              2824
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-10-amenity-10",
+        "floorId": "floor-directory-10",
+        "name": "Amenity",
+        "category": "amenity",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,2374 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-b6",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          349.65,
+          148.77
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-b6",
+        "name": "B6",
+        "roomNumber": "B6",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-b7",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          835.63,
+          148.84
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-b7",
+        "name": "B7",
+        "roomNumber": "B7",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-b5",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          349.65,
+          373.76
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-b5",
+        "name": "B5",
+        "roomNumber": "B5",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-focus",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          455.53,
+          428.78
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-focus",
+        "name": "Focus",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "focus_room",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-focus-2",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          572.51,
+          428.78
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-focus-2",
+        "name": "Focus",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "focus_room",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-focus-focus",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1207.01,
+          446.78
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-focus-focus",
+        "name": "Focus Focus",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "focus_room",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-b3",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          349.65,
+          607.78
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-b3",
+        "name": "B3",
+        "roomNumber": "B3",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-b8",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          835.63,
+          612.42
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-b8",
+        "name": "B8",
+        "roomNumber": "B8",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-b9",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          835.63,
+          652.77
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-b9",
+        "name": "B9",
+        "roomNumber": "B9",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-b4",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          457.62,
+          670.85
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-b4",
+        "name": "B4",
+        "roomNumber": "B4",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-lactation",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1309.85,
+          680.78
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-lactation",
+        "name": "Lactation",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "lactation_room",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-room",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1301.02,
+          695.18
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-room",
+        "name": "Room",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-b2",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          457.62,
+          796.84
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-b2",
+        "name": "B2",
+        "roomNumber": "B2",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-b10",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          845.23,
+          886.56
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-b10",
+        "name": "B10",
+        "roomNumber": "B10",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-c1",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1556.69,
+          891.42
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-c1",
+        "name": "C1",
+        "roomNumber": "C1",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-b1",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          457.62,
+          940.84
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-b1",
+        "name": "B1",
+        "roomNumber": "B1",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-open",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1553.26,
+          1002.55
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-open",
+        "name": "Open",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-collab",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1555.73,
+          1016.95
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-collab",
+        "name": "Collab",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-c2",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1664.44,
+          1080.45
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-c2",
+        "name": "C2",
+        "roomNumber": "C2",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-c3",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1763.62,
+          1080.45
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-c3",
+        "name": "C3",
+        "roomNumber": "C3",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-b11",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          845.23,
+          1102.28
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-b11",
+        "name": "B11",
+        "roomNumber": "B11",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-c100",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1687.88,
+          1281.97
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-c100",
+        "name": "C100",
+        "roomNumber": "C100",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-workstations",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1688.22,
+          1301.46
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-workstations",
+        "name": "Workstations",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "workstation",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-c5",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1664.51,
+          1481.02
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-c5",
+        "name": "C5",
+        "roomNumber": "C5",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-c4",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1763.55,
+          1481.02
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-c4",
+        "name": "C4",
+        "roomNumber": "C4",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-focus-3",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1031.48,
+          1508.78
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-focus-3",
+        "name": "Focus",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "focus_room",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-open-2",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1553.26,
+          1539.66
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-open-2",
+        "name": "Open",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-collab-2",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1555.73,
+          1554.06
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-collab-2",
+        "name": "Collab",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-focus-4",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1031.48,
+          1562.78
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-focus-4",
+        "name": "Focus",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "focus_room",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-a8",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          855.91,
+          1584.48
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-a8",
+        "name": "A8",
+        "roomNumber": "A8",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-a10",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          595.42,
+          1620.48
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-a10",
+        "name": "A10",
+        "roomNumber": "A10",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-focus-5",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          581.43,
+          1652.78
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-focus-5",
+        "name": "Focus",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "focus_room",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-a9-a7",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          828.87,
+          1656.48
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-a9-a7",
+        "name": "A9 A7",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-c6-c7",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1718.49,
+          1661.15
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-c6-c7",
+        "name": "C6 C7",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-code",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          723.92,
+          1809.37
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-code",
+        "name": "Code",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-open-3",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          976.52,
+          1809.4
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-open-3",
+        "name": "Open",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-focus-6",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1445.5,
+          1814.78
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-focus-6",
+        "name": "Focus",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "focus_room",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-box",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          720.23,
+          1823.77
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-box",
+        "name": "Box",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-focus-focus-focus-collab",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          897.8,
+          1823.79
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-focus-focus-focus-collab",
+        "name": "Focus Focus Focus Collab",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "focus_room",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-a4",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          729.83,
+          1858.85
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-a4",
+        "name": "A4",
+        "roomNumber": "A4",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-a5-a6",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          891.79,
+          1858.85
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-a5-a6",
+        "name": "A5 A6",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-c200",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1693.23,
+          1866.07
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-c200",
+        "name": "C200",
+        "roomNumber": "C200",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-code-2",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1444.16,
+          1868.78
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-code-2",
+        "name": "Code",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-box-2",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1440.48,
+          1883.18
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-box-2",
+        "name": "Box",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-workstations-2",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1693.45,
+          1885.56
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-workstations-2",
+        "name": "Workstations",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "workstation",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-focus-7",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1445.5,
+          1940.78
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-focus-7",
+        "name": "Focus",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "focus_room",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-focus-8",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1445.47,
+          2048.78
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-focus-8",
+        "name": "Focus",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "focus_room",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-c8",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1736.51,
+          2057.12
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-c8",
+        "name": "C8",
+        "roomNumber": "C8",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-a200",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          496.35,
+          2086.64
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-a200",
+        "name": "A200",
+        "roomNumber": "A200",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-a100",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          856.35,
+          2083.25
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-a100",
+        "name": "A100",
+        "roomNumber": "A100",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-workstations-3",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          493.74,
+          2106.13
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-workstations-3",
+        "name": "Workstations",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "workstation",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-workstations-4",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          853.74,
+          2102.75
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-workstations-4",
+        "name": "Workstations",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "workstation",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-focus-9",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1445.47,
+          2120.78
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-focus-9",
+        "name": "Focus",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "focus_room",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-c9",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1736.51,
+          2165.15
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-c9",
+        "name": "C9",
+        "roomNumber": "C9",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-focus-focus-2",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          675.98,
+          2273.78
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-focus-focus-2",
+        "name": "Focus Focus",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "focus_room",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-focus-10",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          941.47,
+          2291.78
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-focus-10",
+        "name": "Focus",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "focus_room",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-c10",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1422.6,
+          2309.25
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-c10",
+        "name": "C10",
+        "roomNumber": "C10",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-a3",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          657.85,
+          2331.49
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-a3",
+        "name": "A3",
+        "roomNumber": "A3",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-a2",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          747.78,
+          2331.87
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-a2",
+        "name": "A2",
+        "roomNumber": "A2",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-a1",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          837.87,
+          2331.49
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-a1",
+        "name": "A1",
+        "roomNumber": "A1",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-focus-11",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          941.47,
+          2318.78
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-focus-11",
+        "name": "Focus",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "focus_room",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-code-3",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          651.94,
+          2363.27
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-code-3",
+        "name": "Code",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-focus-focus-open",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          886.28,
+          2363.25
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-focus-focus-open",
+        "name": "Focus Focus Open",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "focus_room",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-box-3",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          648.25,
+          2377.67
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-box-3",
+        "name": "Box",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-collab-3",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          942.96,
+          2377.73
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-collab-3",
+        "name": "Collab",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-lactation-open",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1382.26,
+          2373.01
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-lactation-open",
+        "name": "Lactation Open",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "lactation_room",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-room-2",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1338.58,
+          2387.18
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-room-2",
+        "name": "Room",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-collab-4",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1429.73,
+          2387.63
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-collab-4",
+        "name": "Collab",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-c300",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1715.72,
+          2408.67
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-c300",
+        "name": "C300",
+        "roomNumber": "C300",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-d11",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          360,
+          2435.07
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-d11",
+        "name": "D11",
+        "roomNumber": "D11",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-workstations-5",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1716.06,
+          2428.16
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-workstations-5",
+        "name": "Workstations",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "workstation",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-open-4",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          778.47,
+          2516.8
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-open-4",
+        "name": "Open",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-focus-focus-3",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1406.18,
+          2516.79
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-focus-focus-3",
+        "name": "Focus Focus",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "focus_room",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-collab-5",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          780.94,
+          2531.2
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-collab-5",
+        "name": "Collab",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-c11",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1134.04,
+          2525.22
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-c11",
+        "name": "C11",
+        "roomNumber": "C11",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-d8",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          674.19,
+          2628.48
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-d8",
+        "name": "D8",
+        "roomNumber": "D8",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-d7",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          781.94,
+          2628.86
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-d7",
+        "name": "D7",
+        "roomNumber": "D7",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-d4",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1376.03,
+          2646.46
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-d4",
+        "name": "D4",
+        "roomNumber": "D4",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-c12-c13",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1557.01,
+          2646.66
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-c12-c13",
+        "name": "C12 C13",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-d6",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          710.13,
+          2668.8
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-d6",
+        "name": "D6",
+        "roomNumber": "D6",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-focus-12",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1374.68,
+          2678.79
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-focus-12",
+        "name": "Focus",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "focus_room",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-community",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1004.28,
+          2693.95
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-community",
+        "name": "Community",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-d3",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1430.08,
+          2691.46
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-d3",
+        "name": "D3",
+        "roomNumber": "D3",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-d2-d1",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1556.32,
+          2691.46
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-d2-d1",
+        "name": "D2 D1",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-hub",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          965.07,
+          2722.75
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-hub",
+        "name": "Hub",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-focus-13",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1374.68,
+          2732.79
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-focus-13",
+        "name": "Focus",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "focus_room",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-d400",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          494.06,
+          2750.85
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-d400",
+        "name": "D400",
+        "roomNumber": "D400",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-workstations-6",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          493.64,
+          2770.35
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-workstations-6",
+        "name": "Workstations",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "workstation",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-d100",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1789.67,
+          2767.1
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-d100",
+        "name": "D100",
+        "roomNumber": "D100",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-d5",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1124.2,
+          2794.82
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-d5",
+        "name": "D5",
+        "roomNumber": "D5",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-focus-14",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1626.68,
+          2787.03
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-focus-14",
+        "name": "Focus",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "focus_room",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-workstations-7",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1789.14,
+          2786.59
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-workstations-7",
+        "name": "Workstations",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "workstation",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-d9",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          674.16,
+          2812.83
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-d9",
+        "name": "D9",
+        "roomNumber": "D9",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-focus-15",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          725.53,
+          2858.18
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-focus-15",
+        "name": "Focus",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "focus_room",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-d10",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          360,
+          2939.07
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-d10",
+        "name": "D10",
+        "roomNumber": "D10",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-open-5",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          941.26,
+          3002.8
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-open-5",
+        "name": "Open",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-collab-6",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          943.73,
+          3017.2
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-collab-6",
+        "name": "Collab",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "custom",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-d300",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          773.41,
+          3037.4
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-d300",
+        "name": "D300",
+        "roomNumber": "D300",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-d200",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1432.99,
+          3037.5
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-d200",
+        "name": "D200",
+        "roomNumber": "D200",
+        "floorId": "floor-directory-07",
+        "category": "office",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-workstations-8",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          772.99,
+          3056.89
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-workstations-8",
+        "name": "Workstations",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "workstation",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-07-poi-workstations-9",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1432.57,
+          3056.99
+        ]
+      },
+      "properties": {
+        "id": "floor-07-poi-workstations-9",
+        "name": "Workstations",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "workstation",
+        "icon": "map-pin",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-07-elevator-lobby",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1188,
+          1390
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-07-elevator-lobby",
+        "name": "Elevator Lobby",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "elevator_lobby",
+        "icon": "panel-top",
+        "searchable": true,
+        "accessible": true,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-07-stairs",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1188,
+          1480
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-07-stairs",
+        "name": "Stairs",
+        "roomNumber": "",
+        "floorId": "floor-directory-07",
+        "category": "stairs",
+        "icon": "stairs",
+        "searchable": true,
+        "accessible": false,
+        "source": "directory-pdf",
+        "confidence": 1
+      }
+    }
+  ]
+}

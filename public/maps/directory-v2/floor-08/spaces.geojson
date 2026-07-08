@@ -1,0 +1,1916 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_b-1",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              328,
+              128
+            ],
+            [
+              432,
+              128
+            ],
+            [
+              432,
+              304
+            ],
+            [
+              328,
+              304
+            ],
+            [
+              328,
+              128
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_b-1",
+        "floorId": "floor-directory-08",
+        "name": "Zone B",
+        "category": "zone_b",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_b-2",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              952,
+              128
+            ],
+            [
+              1280,
+              128
+            ],
+            [
+              1280,
+              376
+            ],
+            [
+              952,
+              376
+            ],
+            [
+              952,
+              128
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_b-2",
+        "floorId": "floor-directory-08",
+        "name": "Zone B",
+        "category": "zone_b",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_b-3",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              648,
+              328
+            ],
+            [
+              864,
+              328
+            ],
+            [
+              864,
+              488
+            ],
+            [
+              648,
+              488
+            ],
+            [
+              648,
+              328
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_b-3",
+        "floorId": "floor-directory-08",
+        "name": "Zone B",
+        "category": "zone_b",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_b-4",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              952,
+              448
+            ],
+            [
+              1040,
+              448
+            ],
+            [
+              1040,
+              664
+            ],
+            [
+              952,
+              664
+            ],
+            [
+              952,
+              448
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_b-4",
+        "floorId": "floor-directory-08",
+        "name": "Zone B",
+        "category": "zone_b",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_b-5",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1048,
+              520
+            ],
+            [
+              1136,
+              520
+            ],
+            [
+              1136,
+              736
+            ],
+            [
+              1048,
+              736
+            ],
+            [
+              1048,
+              520
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_b-5",
+        "floorId": "floor-directory-08",
+        "name": "Zone B",
+        "category": "zone_b",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_b-6",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              648,
+              576
+            ],
+            [
+              864,
+              576
+            ],
+            [
+              864,
+              776
+            ],
+            [
+              648,
+              776
+            ],
+            [
+              648,
+              576
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_b-6",
+        "floorId": "floor-directory-08",
+        "name": "Zone B",
+        "category": "zone_b",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_b-7",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              328,
+              632
+            ],
+            [
+              432,
+              632
+            ],
+            [
+              432,
+              808
+            ],
+            [
+              328,
+              808
+            ],
+            [
+              328,
+              632
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_b-7",
+        "floorId": "floor-directory-08",
+        "name": "Zone B",
+        "category": "zone_b",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-amenity-8",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1280,
+              664
+            ],
+            [
+              1352,
+              664
+            ],
+            [
+              1352,
+              776
+            ],
+            [
+              1280,
+              776
+            ],
+            [
+              1280,
+              664
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-amenity-8",
+        "floorId": "floor-directory-08",
+        "name": "Amenity",
+        "category": "amenity",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_c-9",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1352,
+              664
+            ],
+            [
+              1616,
+              664
+            ],
+            [
+              1616,
+              776
+            ],
+            [
+              1352,
+              776
+            ],
+            [
+              1352,
+              664
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_c-9",
+        "floorId": "floor-directory-08",
+        "name": "Zone C",
+        "category": "zone_c",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_c-10",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1624,
+              664
+            ],
+            [
+              1832,
+              664
+            ],
+            [
+              1832,
+              776
+            ],
+            [
+              1624,
+              776
+            ],
+            [
+              1624,
+              664
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_c-10",
+        "floorId": "floor-directory-08",
+        "name": "Zone C",
+        "category": "zone_c",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_b-11",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              576,
+              864
+            ],
+            [
+              936,
+              864
+            ],
+            [
+              936,
+              1256
+            ],
+            [
+              576,
+              1256
+            ],
+            [
+              576,
+              864
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_b-11",
+        "floorId": "floor-directory-08",
+        "name": "Zone B",
+        "category": "zone_b",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_b-12",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1024,
+              864
+            ],
+            [
+              1280,
+              864
+            ],
+            [
+              1280,
+              1008
+            ],
+            [
+              1024,
+              1008
+            ],
+            [
+              1024,
+              864
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_b-12",
+        "floorId": "floor-directory-08",
+        "name": "Zone B",
+        "category": "zone_b",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-amenity-13",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1352,
+              864
+            ],
+            [
+              1424,
+              864
+            ],
+            [
+              1424,
+              1008
+            ],
+            [
+              1352,
+              1008
+            ],
+            [
+              1352,
+              864
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-amenity-13",
+        "floorId": "floor-directory-08",
+        "name": "Amenity",
+        "category": "amenity",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_b-14",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              832,
+              976
+            ],
+            [
+              936,
+              976
+            ],
+            [
+              936,
+              1040
+            ],
+            [
+              832,
+              1040
+            ],
+            [
+              832,
+              976
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_b-14",
+        "floorId": "floor-directory-08",
+        "name": "Zone B",
+        "category": "zone_b",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_c-15",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1424,
+              1008
+            ],
+            [
+              1640,
+              1008
+            ],
+            [
+              1640,
+              1112
+            ],
+            [
+              1424,
+              1112
+            ],
+            [
+              1424,
+              1008
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_c-15",
+        "floorId": "floor-directory-08",
+        "name": "Zone C",
+        "category": "zone_c",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-amenity-16",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1104,
+              1016
+            ],
+            [
+              1280,
+              1016
+            ],
+            [
+              1280,
+              1184
+            ],
+            [
+              1104,
+              1184
+            ],
+            [
+              1104,
+              1016
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-amenity-16",
+        "floorId": "floor-directory-08",
+        "name": "Amenity",
+        "category": "amenity",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_c-17",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1424,
+              1120
+            ],
+            [
+              1496,
+              1120
+            ],
+            [
+              1496,
+              1256
+            ],
+            [
+              1424,
+              1256
+            ],
+            [
+              1424,
+              1120
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_c-17",
+        "floorId": "floor-directory-08",
+        "name": "Zone C",
+        "category": "zone_c",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_c-18",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1104,
+              1184
+            ],
+            [
+              1416,
+              1184
+            ],
+            [
+              1416,
+              1192
+            ],
+            [
+              1104,
+              1192
+            ],
+            [
+              1104,
+              1184
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_c-18",
+        "floorId": "floor-directory-08",
+        "name": "Zone C",
+        "category": "zone_c",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_c-19",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1104,
+              1256
+            ],
+            [
+              1416,
+              1256
+            ],
+            [
+              1416,
+              1264
+            ],
+            [
+              1104,
+              1264
+            ],
+            [
+              1104,
+              1256
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_c-19",
+        "floorId": "floor-directory-08",
+        "name": "Zone C",
+        "category": "zone_c",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_a-20",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1024,
+              1352
+            ],
+            [
+              1096,
+              1352
+            ],
+            [
+              1096,
+              1424
+            ],
+            [
+              1024,
+              1424
+            ],
+            [
+              1024,
+              1352
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_a-20",
+        "floorId": "floor-directory-08",
+        "name": "Zone A",
+        "category": "zone_a",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_c-21",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1512,
+              1408
+            ],
+            [
+              1832,
+              1408
+            ],
+            [
+              1832,
+              1656
+            ],
+            [
+              1512,
+              1656
+            ],
+            [
+              1512,
+              1408
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_c-21",
+        "floorId": "floor-directory-08",
+        "name": "Zone C",
+        "category": "zone_c",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_a-22",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              648,
+              1464
+            ],
+            [
+              936,
+              1464
+            ],
+            [
+              936,
+              1672
+            ],
+            [
+              648,
+              1672
+            ],
+            [
+              648,
+              1464
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_a-22",
+        "floorId": "floor-directory-08",
+        "name": "Zone A",
+        "category": "zone_a",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_a-23",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1024,
+              1496
+            ],
+            [
+              1096,
+              1496
+            ],
+            [
+              1096,
+              1600
+            ],
+            [
+              1024,
+              1600
+            ],
+            [
+              1024,
+              1496
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_a-23",
+        "floorId": "floor-directory-08",
+        "name": "Zone A",
+        "category": "zone_a",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_a-24",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1024,
+              1696
+            ],
+            [
+              1096,
+              1696
+            ],
+            [
+              1096,
+              1760
+            ],
+            [
+              1024,
+              1760
+            ],
+            [
+              1024,
+              1696
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_a-24",
+        "floorId": "floor-directory-08",
+        "name": "Zone A",
+        "category": "zone_a",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_a-25",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              648,
+              1768
+            ],
+            [
+              936,
+              1768
+            ],
+            [
+              936,
+              1928
+            ],
+            [
+              648,
+              1928
+            ],
+            [
+              648,
+              1768
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_a-25",
+        "floorId": "floor-directory-08",
+        "name": "Zone A",
+        "category": "zone_a",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_a-26",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1024,
+              1856
+            ],
+            [
+              1096,
+              1856
+            ],
+            [
+              1096,
+              2048
+            ],
+            [
+              1024,
+              2048
+            ],
+            [
+              1024,
+              1856
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_a-26",
+        "floorId": "floor-directory-08",
+        "name": "Zone A",
+        "category": "zone_a",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_c-27",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1728,
+              1856
+            ],
+            [
+              1832,
+              1856
+            ],
+            [
+              1832,
+              1976
+            ],
+            [
+              1728,
+              1976
+            ],
+            [
+              1728,
+              1856
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_c-27",
+        "floorId": "floor-directory-08",
+        "name": "Zone C",
+        "category": "zone_c",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-amenity-28",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1104,
+              1888
+            ],
+            [
+              1416,
+              1888
+            ],
+            [
+              1416,
+              2280
+            ],
+            [
+              1104,
+              2280
+            ],
+            [
+              1104,
+              1888
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-amenity-28",
+        "floorId": "floor-directory-08",
+        "name": "Amenity",
+        "category": "amenity",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_c-29",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1728,
+              1984
+            ],
+            [
+              1832,
+              1984
+            ],
+            [
+              1832,
+              2264
+            ],
+            [
+              1728,
+              2264
+            ],
+            [
+              1728,
+              1984
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_c-29",
+        "floorId": "floor-directory-08",
+        "name": "Zone C",
+        "category": "zone_c",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_a-30",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1024,
+              2056
+            ],
+            [
+              1096,
+              2056
+            ],
+            [
+              1096,
+              2104
+            ],
+            [
+              1024,
+              2104
+            ],
+            [
+              1024,
+              2056
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_a-30",
+        "floorId": "floor-directory-08",
+        "name": "Zone A",
+        "category": "zone_a",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_a-31",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              576,
+              2144
+            ],
+            [
+              752,
+              2144
+            ],
+            [
+              752,
+              2280
+            ],
+            [
+              576,
+              2280
+            ],
+            [
+              576,
+              2144
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_a-31",
+        "floorId": "floor-directory-08",
+        "name": "Zone A",
+        "category": "zone_a",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_a-32",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              760,
+              2152
+            ],
+            [
+              936,
+              2152
+            ],
+            [
+              936,
+              2280
+            ],
+            [
+              760,
+              2280
+            ],
+            [
+              760,
+              2152
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_a-32",
+        "floorId": "floor-directory-08",
+        "name": "Zone A",
+        "category": "zone_a",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_a-33",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1024,
+              2176
+            ],
+            [
+              1096,
+              2176
+            ],
+            [
+              1096,
+              2280
+            ],
+            [
+              1024,
+              2280
+            ],
+            [
+              1024,
+              2176
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_a-33",
+        "floorId": "floor-directory-08",
+        "name": "Zone A",
+        "category": "zone_a",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_d-34",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              576,
+              2288
+            ],
+            [
+              608,
+              2288
+            ],
+            [
+              608,
+              2360
+            ],
+            [
+              576,
+              2360
+            ],
+            [
+              576,
+              2288
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_d-34",
+        "floorId": "floor-directory-08",
+        "name": "Zone D",
+        "category": "zone_d",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_d-35",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              616,
+              2288
+            ],
+            [
+              848,
+              2288
+            ],
+            [
+              848,
+              2360
+            ],
+            [
+              616,
+              2360
+            ],
+            [
+              616,
+              2288
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_d-35",
+        "floorId": "floor-directory-08",
+        "name": "Zone D",
+        "category": "zone_d",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_d-36",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1024,
+              2288
+            ],
+            [
+              1128,
+              2288
+            ],
+            [
+              1128,
+              2360
+            ],
+            [
+              1024,
+              2360
+            ],
+            [
+              1024,
+              2288
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_d-36",
+        "floorId": "floor-directory-08",
+        "name": "Zone D",
+        "category": "zone_d",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-amenity-37",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1128,
+              2288
+            ],
+            [
+              1200,
+              2288
+            ],
+            [
+              1200,
+              2360
+            ],
+            [
+              1128,
+              2360
+            ],
+            [
+              1128,
+              2288
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-amenity-37",
+        "floorId": "floor-directory-08",
+        "name": "Amenity",
+        "category": "amenity",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_c-38",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1280,
+              2288
+            ],
+            [
+              1416,
+              2288
+            ],
+            [
+              1416,
+              2360
+            ],
+            [
+              1280,
+              2360
+            ],
+            [
+              1280,
+              2288
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_c-38",
+        "floorId": "floor-directory-08",
+        "name": "Zone C",
+        "category": "zone_c",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_d-39",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              328,
+              2416
+            ],
+            [
+              432,
+              2416
+            ],
+            [
+              432,
+              2592
+            ],
+            [
+              328,
+              2592
+            ],
+            [
+              328,
+              2416
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_d-39",
+        "floorId": "floor-directory-08",
+        "name": "Zone D",
+        "category": "zone_d",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_d-40",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              648,
+              2448
+            ],
+            [
+              864,
+              2448
+            ],
+            [
+              864,
+              2648
+            ],
+            [
+              648,
+              2648
+            ],
+            [
+              648,
+              2448
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_d-40",
+        "floorId": "floor-directory-08",
+        "name": "Zone D",
+        "category": "zone_d",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_d-41",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              952,
+              2448
+            ],
+            [
+              1280,
+              2448
+            ],
+            [
+              1280,
+              2648
+            ],
+            [
+              952,
+              2648
+            ],
+            [
+              952,
+              2448
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_d-41",
+        "floorId": "floor-directory-08",
+        "name": "Zone D",
+        "category": "zone_d",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_c-42",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1288,
+              2448
+            ],
+            [
+              1496,
+              2448
+            ],
+            [
+              1496,
+              2640
+            ],
+            [
+              1288,
+              2640
+            ],
+            [
+              1288,
+              2448
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_c-42",
+        "floorId": "floor-directory-08",
+        "name": "Zone C",
+        "category": "zone_c",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_d-43",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1280,
+              2648
+            ],
+            [
+              1600,
+              2648
+            ],
+            [
+              1600,
+              2768
+            ],
+            [
+              1280,
+              2768
+            ],
+            [
+              1280,
+              2648
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_d-43",
+        "floorId": "floor-directory-08",
+        "name": "Zone D",
+        "category": "zone_d",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_d-44",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              648,
+              2736
+            ],
+            [
+              752,
+              2736
+            ],
+            [
+              752,
+              2896
+            ],
+            [
+              648,
+              2896
+            ],
+            [
+              648,
+              2736
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_d-44",
+        "floorId": "floor-directory-08",
+        "name": "Zone D",
+        "category": "zone_d",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_d-45",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              760,
+              2736
+            ],
+            [
+              864,
+              2736
+            ],
+            [
+              864,
+              2896
+            ],
+            [
+              760,
+              2896
+            ],
+            [
+              760,
+              2736
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_d-45",
+        "floorId": "floor-directory-08",
+        "name": "Zone D",
+        "category": "zone_d",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_d-46",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              952,
+              2776
+            ],
+            [
+              1280,
+              2776
+            ],
+            [
+              1280,
+              2896
+            ],
+            [
+              952,
+              2896
+            ],
+            [
+              952,
+              2776
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_d-46",
+        "floorId": "floor-directory-08",
+        "name": "Zone D",
+        "category": "zone_d",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_d-47",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1568,
+              2776
+            ],
+            [
+              1600,
+              2776
+            ],
+            [
+              1600,
+              2896
+            ],
+            [
+              1568,
+              2896
+            ],
+            [
+              1568,
+              2776
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_d-47",
+        "floorId": "floor-directory-08",
+        "name": "Zone D",
+        "category": "zone_d",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_d-48",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              328,
+              2920
+            ],
+            [
+              432,
+              2920
+            ],
+            [
+              432,
+              3096
+            ],
+            [
+              328,
+              3096
+            ],
+            [
+              328,
+              2920
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_d-48",
+        "floorId": "floor-directory-08",
+        "name": "Zone D",
+        "category": "zone_d",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "floor-directory-08-zone_d-49",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1064,
+              2992
+            ],
+            [
+              1280,
+              2992
+            ],
+            [
+              1280,
+              3096
+            ],
+            [
+              1064,
+              3096
+            ],
+            [
+              1064,
+              2992
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "floor-directory-08-zone_d-49",
+        "floorId": "floor-directory-08",
+        "name": "Zone D",
+        "category": "zone_d",
+        "source": "directory-pdf-color-segmentation",
+        "editable": true
+      }
+    }
+  ]
+}

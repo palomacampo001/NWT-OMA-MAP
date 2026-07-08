@@ -1,0 +1,11 @@
+{
+  "id": "ibm-oma-directory-map-v2",
+  "sourcePdf": "260708_IBM_OMA_DI_Directory Map_2-7-8-9-10F.pdf",
+  "floors": [
+    "floor-02/floor.json",
+    "floor-07/floor.json",
+    "floor-08/floor.json",
+    "floor-09/floor.json",
+    "floor-10/floor.json"
+  ]
+}
