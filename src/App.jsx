@@ -153,14 +153,46 @@ export default function App() {
   const spokenRouteRef = useRef('');
   const routePathDraftNodeIdsRef = useRef([]);
   const routePathLastPointRef = useRef(null);
+  const voicesRef = useRef([]);
+
+  // Populate voice list as soon as the browser makes it available.
+  // speechSynthesis.getVoices() is async on Chrome/Android — it fires
+  // the voiceschanged event when ready. Safari/iOS provides voices synchronously.
+  if (typeof window !== 'undefined' && window.speechSynthesis) {
+    const loadVoices = () => { voicesRef.current = window.speechSynthesis.getVoices(); };
+    loadVoices();
+    if (!voicesRef.current.length) {
+      window.speechSynthesis.addEventListener('voiceschanged', loadVoices, { once: true });
+    }
+  }
 
   function speakInstruction(text) {
     if (!voiceGuidance || !text || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.95;
+    utterance.rate = 0.92;
     utterance.pitch = 1;
     utterance.volume = 1;
+
+    // Pick the best available English voice — prefers Siri (Safari/iOS),
+    // Google (Chrome), or any enhanced/premium voice over the default robotic one.
+    const voices = voicesRef.current.length ? voicesRef.current : window.speechSynthesis.getVoices();
+    const preferred = [
+      // iOS/macOS Siri voices
+      'Samantha', 'Karen', 'Moira', 'Tessa', 'Veena',
+      // Chrome / Android natural voices
+      'Google US English', 'Google UK English Female', 'Google UK English Male',
+      // Windows natural voices
+      'Microsoft Aria Online (Natural)', 'Microsoft Jenny Online (Natural)',
+      'Microsoft Guy Online (Natural)',
+    ];
+    const pick =
+      preferred.reduce((found, name) => found || voices.find((v) => v.name === name), null) ||
+      voices.find((v) => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Enhanced') || v.name.includes('Premium') || v.name.includes('Online'))) ||
+      voices.find((v) => v.lang.startsWith('en') && v.localService === false) ||
+      voices.find((v) => v.lang.startsWith('en'));
+    if (pick) utterance.voice = pick;
+
     window.speechSynthesis.speak(utterance);
   }
 
