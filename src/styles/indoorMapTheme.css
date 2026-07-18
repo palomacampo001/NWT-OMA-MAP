@@ -321,13 +321,12 @@
   color: #166534;
 }
 
-/* ── "You are here" marker — single SVG, perfectly centered, large for accessibility ── */
+/* ── "You are here" marker — pure SVG, no CSS transform conflicts ── */
 .leaflet-you-marker {
   display: block;
-  animation: current-location-breathe 1.9s ease-in-out infinite;
-  transform-origin: 50% 50%;
-  transition: transform 220ms ease;
-  filter: drop-shadow(0 3px 8px rgba(20, 31, 43, 0.32));
+  /* No CSS transform or animation here — rotation is handled by SVG transform="rotate(...)"
+     on the inner <g> so it is immune to CSS transform-origin / Leaflet DOM offsets. */
+  filter: drop-shadow(0 2px 10px rgba(59, 130, 246, 0.40));
   overflow: visible;
 }
 

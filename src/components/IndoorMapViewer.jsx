@@ -818,28 +818,36 @@ export default function IndoorMapViewer({
       userMarkerRef.current = null;
     }
     if (userArrowPoint) {
-      // Single SVG marker — circle and arrow are one element so they can never
-      // drift apart. viewBox is 80×80, anchor is dead center (40,40).
-      // The circle sits at cx=40 cy=40 r=26. The arrowhead points up from center.
-      const youSvg = `<svg class="leaflet-you-marker" xmlns="http://www.w3.org/2000/svg"
-        width="80" height="80" viewBox="0 0 80 80"
-        style="transform: rotate(${userArrowHeading}deg); transform-origin: 40px 40px;">
-        <!-- outer glow ring -->
-        <circle cx="40" cy="40" r="34" fill="rgba(234,88,12,0.13)" stroke="rgba(234,88,12,0.28)" stroke-width="1.5"/>
-        <!-- white circle base -->
-        <circle cx="40" cy="40" r="26" fill="white" stroke="rgba(20,31,43,0.10)" stroke-width="1"/>
-        <!-- bold orange arrowhead pointing up, base centered on circle center -->
-        <polygon points="40,10 56,46 40,38 24,46" fill="#ea580c"/>
-        <!-- small dot at arrow base -->
-        <circle cx="40" cy="40" r="5" fill="#ea580c" stroke="white" stroke-width="2"/>
+      // SVG marker — all geometry in a single coordinate space (viewBox 0 0 96 96,
+      // center 48,48). Rotation is a pure SVG transform on the inner <g> so it
+      // is immune to CSS transform-origin / Leaflet DOM positioning issues.
+      // Arrow geometry is designed so its visual centroid is exactly at 48,48.
+      //
+      // Visual hierarchy (matches reference image):
+      //   1. Large soft accuracy halo   — r=44, semi-transparent blue
+      //   2. Solid blue circle          — r=28
+      //   3. Navigation arrow           — tip at (48,20), occupies ~60% of circle
+      //   4. Center dot                 — r=5
+      const sz = 96;
+      const cx = 48, cy = 48;
+      // Arrow: tip at (cx, cy-20), wings at (cx±17, cy+14), notch at (cx, cy+6)
+      // Visual centroid ≈ (cx, cy) by symmetry and geometry.
+      const arrowPts = `${cx},${cy-20} ${cx+17},${cy+14} ${cx},${cy+6} ${cx-17},${cy+14}`;
+      const youSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}">
+        <circle cx="${cx}" cy="${cy}" r="44" fill="rgba(59,130,246,0.18)" stroke="rgba(59,130,246,0.30)" stroke-width="1.5"/>
+        <circle cx="${cx}" cy="${cy}" r="28" fill="#3b82f6" stroke="rgba(255,255,255,0.85)" stroke-width="2.5"/>
+        <g transform="rotate(${userArrowHeading}, ${cx}, ${cy})">
+          <polygon points="${arrowPts}" fill="rgba(255,255,255,0.95)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5" stroke-linejoin="round"/>
+          <circle cx="${cx}" cy="${cy}" r="4.5" fill="rgba(59,130,246,0.9)" stroke="white" stroke-width="2"/>
+        </g>
       </svg>`;
       userMarkerRef.current = L.marker(pointLatLng(userArrowPoint), {
         pane: 'endpointPane',
         icon: L.divIcon({
           className: '',
           html: youSvg,
-          iconSize: [80, 80],
-          iconAnchor: [40, 40],
+          iconSize: [sz, sz],
+          iconAnchor: [sz / 2, sz / 2],
         }),
       }).addTo(map);
       userMarkerRef.current.setZIndexOffset(5000);
