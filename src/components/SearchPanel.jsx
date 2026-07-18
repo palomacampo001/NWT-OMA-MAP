@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Navigation, Pencil, Search, X } from 'lucide-react';
+import BrandMark from './BrandMark.jsx';
 import { formatFeatureLabel } from '../utils/navigation.js';
 
 function matchFeature(feature, query) {
@@ -47,6 +48,10 @@ export default function SearchPanel({
     if (activeRoute) setEditing(false);
   }, [activeRoute?.destinationId]);
 
+  useEffect(() => {
+    if (!trimmed) setChosen(null);
+  }, [trimmed]);
+
   function chooseSuggestion(match) {
     setChosen(match);
     onQueryChange(formatFeatureLabel(match.feature));
@@ -91,7 +96,8 @@ export default function SearchPanel({
       <h2>Destination</h2>
       <div className="destination-control">
         <label className="search-box">
-          <Search size={17} />
+          <span className="search-brand"><BrandMark /></span>
+          <Search className="search-fallback-icon" size={17} />
           <input
             value={query}
             onFocus={() => setFocused(true)}
@@ -100,12 +106,12 @@ export default function SearchPanel({
               setChosen(null);
               onQueryChange(event.target.value);
             }}
-            placeholder="Where do you want to go?"
+            placeholder="Where to?"
           />
         </label>
         <button className="primary-button go-route-button" onClick={handleGo} disabled={!routeTarget}>
           <Navigation size={17} />
-          Go
+          <span>Go</span>
         </button>
         {showSuggestions && (
           <div className="suggestion-menu">
@@ -126,18 +132,14 @@ export default function SearchPanel({
           </div>
         )}
       </div>
-      <div className="connector-choice" aria-label="Route connector preference">
-        {connectorOptions.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            className={connectorPreference === option.value ? 'active' : ''}
-            onClick={() => onConnectorPreferenceChange?.(option.value)}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
+      <label className="connector-choice" aria-label="Route connector preference">
+        <span>Route type</span>
+        <select value={connectorPreference} onChange={(event) => onConnectorPreferenceChange?.(event.target.value)}>
+          {connectorOptions.map((option) => (
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
+        </select>
+      </label>
     </section>
   );
 }

@@ -3,22 +3,40 @@
   "floors": [
     {
       "floor": "Floor 2",
+      "cropBounds": [
+        268,
+        106,
+        1898,
+        3116
+      ],
       "labels": 40,
       "pois": 40,
-      "spaces": 24,
+      "spaces": 27,
       "routeNodes": 2172,
       "routeEdges": 7314
     },
     {
       "floor": "Floor 7",
+      "cropBounds": [
+        304,
+        106,
+        1856,
+        3116
+      ],
       "labels": 103,
       "pois": 103,
-      "spaces": 47,
+      "spaces": 58,
       "routeNodes": 1235,
       "routeEdges": 3334
     },
     {
       "floor": "Floor 8",
+      "cropBounds": [
+        304,
+        106,
+        1856,
+        3116
+      ],
       "labels": 130,
       "pois": 130,
       "spaces": 49,
@@ -27,14 +45,26 @@
     },
     {
       "floor": "Floor 9",
+      "cropBounds": [
+        358,
+        106,
+        1910,
+        3116
+      ],
       "labels": 143,
       "pois": 143,
-      "spaces": 56,
+      "spaces": 60,
       "routeNodes": 1243,
       "routeEdges": 3290
     },
     {
       "floor": "Floor 10",
+      "cropBounds": [
+        304,
+        106,
+        1856,
+        3116
+      ],
       "labels": 9,
       "pois": 9,
       "spaces": 10,

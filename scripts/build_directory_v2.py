@@ -17,6 +17,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_PDF = Path("/Users/palomejaibm/Downloads/260708_IBM_OMA_DI_Directory Map_2-7-8-9-10F.pdf")
+SOURCE_MAP_JSON = ROOT / "public" / "directory-map" / "source-published-map.json"
 MAP_JSON = ROOT / "public" / "published-map.json"
 OUTPUT = ROOT / "public" / "maps" / "directory-v2"
 HANDOFF = ROOT / "handoff" / "ibm-oma-directory-map-v2"
@@ -87,13 +88,72 @@ ICON_BY_CATEGORY = {
     "servery": "utensils",
 }
 
+FEATURE_MARGIN = 28
+
 
 def write_json(path: Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, indent=2) + "\n")
 
 
-def clean_background(source: Path, destination: Path) -> None:
+def floor_body_bounds(source: Path) -> tuple[int, int, int, int]:
+    image = Image.open(source).convert("RGB")
+    width, height = image.size
+    scale = 6
+    grid_width = math.ceil(width / scale)
+    grid_height = math.ceil(height / scale)
+    mask: list[bytearray] = [bytearray(grid_width) for _ in range(grid_height)]
+    pixels = image.load()
+    for gy in range(grid_height):
+      for gx in range(grid_width):
+        x0, y0 = gx * scale, gy * scale
+        x1, y1 = min(width, x0 + scale), min(height, y0 + scale)
+        total = (x1 - x0) * (y1 - y0)
+        filled = 0
+        for y in range(y0, y1):
+            for x in range(x0, x1):
+                r, g, b = pixels[x, y]
+                if max(r, g, b) > 70 and not (r > 120 and g > 80 and b < 80 and r > b * 1.5):
+                    filled += 1
+        if filled / max(1, total) > 0.18:
+            mask[gy][gx] = 1
+
+    visited: set[tuple[int, int]] = set()
+    components: list[tuple[int, tuple[int, int, int, int]]] = []
+    for gy in range(grid_height):
+        for gx in range(grid_width):
+            if not mask[gy][gx] or (gx, gy) in visited:
+                continue
+            queue = deque([(gx, gy)])
+            visited.add((gx, gy))
+            cells = []
+            while queue:
+                cx, cy = queue.popleft()
+                cells.append((cx, cy))
+                for nx, ny in ((cx - 1, cy), (cx + 1, cy), (cx, cy - 1), (cx, cy + 1)):
+                    if 0 <= nx < grid_width and 0 <= ny < grid_height and mask[ny][nx] and (nx, ny) not in visited:
+                        visited.add((nx, ny))
+                        queue.append((nx, ny))
+            xs = [cell[0] for cell in cells]
+            ys = [cell[1] for cell in cells]
+            area = len(cells) * scale * scale
+            bounds = (min(xs) * scale, min(ys) * scale, min(width, (max(xs) + 1) * scale), min(height, (max(ys) + 1) * scale))
+            bounds_width = bounds[2] - bounds[0]
+            bounds_height = bounds[3] - bounds[1]
+            if area > 8000 and bounds_width > 35 and bounds_height > 35:
+                components.append((area, bounds))
+
+    if not components:
+        return (0, 0, width, height)
+    min_x = min(bounds[0] for _, bounds in components)
+    min_y = min(bounds[1] for _, bounds in components)
+    max_x = max(bounds[2] for _, bounds in components)
+    max_y = max(bounds[3] for _, bounds in components)
+    padding = 20
+    return (max(0, min_x - padding), max(0, min_y - padding), min(width, max_x + padding), min(height, max_y + padding))
+
+
+def clean_background(source: Path, destination: Path, crop_bounds: tuple[int, int, int, int]) -> None:
     image = Image.open(source).convert("RGB")
     pixels = image.load()
     width, height = image.size
@@ -103,6 +163,7 @@ def clean_background(source: Path, destination: Path) -> None:
             # Remove the static yellow PDF marker and yellow street annotations.
             if r > 150 and g > 105 and b < 85 and r > b * 1.8:
                 pixels[x, y] = (0, 0, 0)
+    image = image.crop(crop_bounds)
     destination.parent.mkdir(parents=True, exist_ok=True)
     image.save(destination, optimize=True)
 
@@ -113,6 +174,64 @@ def classify(name: str) -> str:
         if re.search(pattern, lowered, re.I):
             return category
     return "custom"
+
+
+def is_outer_zone_label(feature: dict) -> bool:
+    text = (feature.get("displayName") or feature.get("name") or feature.get("roomNumber") or "").strip()
+    return bool(re.fullmatch(r"[A-D]", text, re.I))
+
+
+def transform_feature(feature: dict, crop_bounds: tuple[int, int, int, int]) -> dict | None:
+    min_x, min_y, max_x, max_y = crop_bounds
+    geometry = feature.get("geometry") or {}
+    bbox = feature.get("bbox") or [0, 0, 0, 0]
+    if is_outer_zone_label(feature):
+        return None
+    if geometry.get("type") == "Point":
+        x, y = geometry.get("coordinates", [None, None])[:2]
+        if not isinstance(x, (int, float)) or not isinstance(y, (int, float)):
+            return None
+        if not (min_x - FEATURE_MARGIN <= x <= max_x + FEATURE_MARGIN and min_y - FEATURE_MARGIN <= y <= max_y + FEATURE_MARGIN):
+            return None
+        next_feature = {**feature}
+        next_feature["geometry"] = {"type": "Point", "coordinates": [round(x - min_x, 2), round(y - min_y, 2)]}
+        next_feature["bbox"] = [round(bbox[0] - min_x, 2), round(bbox[1] - min_y, 2), bbox[2], bbox[3]] if len(bbox) >= 4 else [round(x - min_x, 2), round(y - min_y, 2), 0, 0]
+        return next_feature
+    if geometry.get("type") == "Polygon":
+        rings = []
+        for ring in geometry.get("coordinates", []):
+            rings.append([[round(x - min_x, 2), round(y - min_y, 2)] for x, y in ring])
+        next_feature = {**feature}
+        next_feature["geometry"] = {"type": "Polygon", "coordinates": rings}
+        next_feature["bbox"] = [round(bbox[0] - min_x, 2), round(bbox[1] - min_y, 2), bbox[2], bbox[3]] if len(bbox) >= 4 else bbox
+        return next_feature
+    return None
+
+
+def transform_graph(graph: dict, crop_bounds: tuple[int, int, int, int]) -> dict:
+    min_x, min_y, max_x, max_y = crop_bounds
+    nodes = []
+    kept = set()
+    for node in graph.get("nodes", []):
+        x = node.get("x")
+        y = node.get("y")
+        if not isinstance(x, (int, float)) or not isinstance(y, (int, float)):
+            continue
+        if not (min_x - FEATURE_MARGIN <= x <= max_x + FEATURE_MARGIN and min_y - FEATURE_MARGIN <= y <= max_y + FEATURE_MARGIN):
+            continue
+        next_node = {**node, "x": round(x - min_x, 2), "y": round(y - min_y, 2)}
+        nodes.append(next_node)
+        kept.add(node["id"])
+    graph = {
+        **graph,
+        "nodes": nodes,
+        "edges": [
+            edge for edge in graph.get("edges", [])
+            if edge.get("fromNodeId") in kept and edge.get("toNodeId") in kept
+        ],
+        "cropBounds": [min_x, min_y, max_x, max_y],
+    }
+    return graph
 
 
 def point_feature(feature: dict) -> dict | None:
@@ -260,7 +379,7 @@ def hallway_geojson(graph: dict) -> dict:
 def build() -> None:
     if OUTPUT.exists():
         shutil.rmtree(OUTPUT)
-    data = json.loads(MAP_JSON.read_text())
+    data = json.loads((SOURCE_MAP_JSON if SOURCE_MAP_JSON.exists() else MAP_JSON).read_text())
     data["building"]["id"] = "building-ibm-oma-directory-map-v2"
     data["building"]["name"] = "No Wrong Turns - IBM OMA Directory Map V2"
     data["building"]["description"] = "PDF-derived indoor map with black-path hallway routing."
@@ -271,7 +390,16 @@ def build() -> None:
         floor_dir = OUTPUT / f"floor-{level}"
         source_image = ROOT / "public" / "directory-map" / f"floor-{level}-directory-map.png"
         background = floor_dir / "background.png"
-        clean_background(source_image, background)
+        crop_bounds = floor_body_bounds(source_image)
+        clean_background(source_image, background, crop_bounds)
+        floor["features"] = [
+            transformed
+            for feature in floor.get("features", [])
+            if (transformed := transform_feature(feature, crop_bounds))
+        ]
+        cropped_width = crop_bounds[2] - crop_bounds[0]
+        cropped_height = crop_bounds[3] - crop_bounds[1]
+        floor["viewBox"] = [0, 0, cropped_width, cropped_height]
 
         pois = [item for feature in floor.get("features", []) if (item := point_feature(feature))]
         labels = [
@@ -290,7 +418,7 @@ def build() -> None:
             for poi in pois
         ]
         spaces = extract_spaces(background, floor["id"])
-        graph = prepare_graph(floor["routeGraph"])
+        graph = prepare_graph(transform_graph(floor["routeGraph"], crop_bounds))
 
         write_json(floor_dir / "pois.geojson", {"type": "FeatureCollection", "features": pois})
         write_json(floor_dir / "labels.geojson", {"type": "FeatureCollection", "features": labels})
@@ -302,6 +430,7 @@ def build() -> None:
             "name": floor["name"],
             "levelNumber": floor["levelNumber"],
             "viewBox": floor["viewBox"],
+            "cropBounds": list(crop_bounds),
             "background": "background.png",
             "spaces": "spaces.geojson",
             "hallways": "hallways.geojson",
@@ -354,6 +483,7 @@ def build() -> None:
         floor["features"].extend(prepared_spaces)
         extraction_report["floors"].append({
             "floor": floor["name"],
+            "cropBounds": list(crop_bounds),
             "labels": len(labels),
             "pois": len(pois),
             "spaces": len(spaces),
@@ -430,11 +560,13 @@ def build() -> None:
         level = str(floor["levelNumber"]).zfill(2)
         image_bytes = (OUTPUT / f"floor-{level}" / "background.png").read_bytes()
         encoded = base64.b64encode(image_bytes).decode("ascii")
+        view_width = floor["viewBox"][2]
+        view_height = floor["viewBox"][3]
         uploaded["buildingId"] = building_id
         uploaded["originalFilename"] = f"floor-{level}-directory-v2.svg"
         uploaded["rawText"] = (
-            f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2160 3240">'
-            f'<image width="2160" height="3240" href="data:image/png;base64,{encoded}"/></svg>'
+            f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {view_width} {view_height}">'
+            f'<image width="{view_width}" height="{view_height}" href="data:image/png;base64,{encoded}"/></svg>'
         )
         uploaded["updatedAt"] = now
     snapshot = json.dumps(data, separators=(",", ":"))

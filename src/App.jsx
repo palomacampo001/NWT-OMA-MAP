@@ -3,7 +3,7 @@ import AppShell from './components/AppShell.jsx';
 import { parseSvg } from './utils/parseSvg.js';
 import { generateIndoorMapData } from './utils/detectFeatures.js';
 import { loadMapState, saveMapState } from './utils/storage.js';
-import { planIndoorRoute } from './utils/navigation.js';
+import { featureCenter, formatFeatureLabel, planIndoorRoute } from './utils/navigation.js';
 import { BUILDING_GEOFENCE, formatDistanceFeet, getDefaultStartAnchor, haversineDistanceMeters, isInsideBuildingGeofence } from './utils/locationConfig.js';
 import { generateHallwayGraph, loadRouteGraphs, saveRouteGraphs } from './utils/routeGraphs.js';
 import sampleMap from './data/sampleConvertedMap.json';
@@ -26,6 +26,7 @@ const initialMap = {
   source: { type: 'svg', filename: '', viewBox: [0, 0, 1200, 820] },
   floors: [],
 };
+const LAST_INDOOR_START_KEY = 'nwt-oma-last-indoor-start';
 
 function floorName(index) {
   return `Floor ${index + 1}`;
@@ -37,6 +38,27 @@ function defaultStartAreaId(floors = []) {
     || floor?.features?.find((item) => item.visible !== false && item.id === 'space-main-ibm-entrance-lobby')
     || floor?.features?.find((item) => item.visible !== false && item.isDefaultStart);
   return feature?.id || '';
+}
+
+function loadLastIndoorStart(floors = []) {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(LAST_INDOOR_START_KEY) || 'null');
+    if (!parsed?.floorId || !parsed?.point) return null;
+    if (!floors.some((floor) => floor.id === parsed.floorId)) return null;
+    if (!Number.isFinite(parsed.point.x) || !Number.isFinite(parsed.point.y)) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function saveLastIndoorStart(location) {
+  if (!location?.floorId || !location?.point) return;
+  localStorage.setItem(LAST_INDOOR_START_KEY, JSON.stringify({
+    floorId: location.floorId,
+    point: location.point,
+    savedAt: new Date().toISOString(),
+  }));
 }
 
 function closeRing(points) {
@@ -70,6 +92,34 @@ function polygonGeometry(points) {
   };
 }
 
+function routeNodeDistance(a, b) {
+  if (!a || !b) return Number.POSITIVE_INFINITY;
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function nearestAttachableRouteNode(node, nodes, draftIds) {
+  return (nodes || [])
+    .filter((candidate) => candidate.id !== node?.id && !draftIds.has(candidate.id))
+    .map((candidate) => ({ node: candidate, distance: routeNodeDistance(node, candidate) }))
+    .sort((a, b) => a.distance - b.distance)[0] || null;
+}
+
+function routeEdgeKey(a, b) {
+  return [a, b].sort().join('|');
+}
+
+function learnedRouteEdge(floorId, from, to, suffix = '') {
+  return {
+    id: `${floorId}-learned-edge-${Date.now().toString(36)}-${suffix}-${Math.round(Math.random() * 1000)}`,
+    floorId,
+    fromNodeId: from.id,
+    toNodeId: to.id,
+    distance: Math.round(routeNodeDistance(from, to)),
+    accessible: true,
+    source: 'admin',
+  };
+}
+
 export default function App() {
   const savedState = loadMapState();
   const isAdminUrl = new URLSearchParams(window.location.search).get('admin') === '1';
@@ -95,7 +145,14 @@ export default function App() {
   const [areaDrawingMode, setAreaDrawingMode] = useState(false);
   const [areaDraftPoints, setAreaDraftPoints] = useState([]);
   const [selectedVertexIndex, setSelectedVertexIndex] = useState(null);
+  const [routeNodeMode, setRouteNodeMode] = useState(false);
+  const [routePathMode, setRoutePathMode] = useState(false);
+  const [routePathDraftNodeIds, setRoutePathDraftNodeIds] = useState([]);
+  const [routeNodeType, setRouteNodeType] = useState('hallway');
+  const [startFloorPromptDismissed, setStartFloorPromptDismissed] = useState(false);
   const spokenRouteRef = useRef('');
+  const routePathDraftNodeIdsRef = useRef([]);
+  const routePathLastPointRef = useRef(null);
 
   function speakInstruction(text) {
     if (!voiceGuidance || !text || !window.speechSynthesis) return;
@@ -155,22 +212,56 @@ export default function App() {
       });
   }, [isAdminUrl]);
 
+  const defaultStartAnchor = useMemo(() => getDefaultStartAnchor(mapData.floors), [mapData.floors]);
+  const defaultRouteOrigin = useMemo(() => {
+    if (userLocation) return userLocation;
+    const saved = loadLastIndoorStart(mapData.floors);
+    if (saved) return { floorId: saved.floorId, point: saved.point, source: 'lastKnownIndoorStart' };
+    if (!defaultStartAnchor?.mapPoint) return null;
+    return { floorId: defaultStartAnchor.floorId, point: defaultStartAnchor.mapPoint, source: 'defaultStartAnchor' };
+  }, [mapData.floors, userLocation, defaultStartAnchor]);
+
   useEffect(() => {
     if (adminMode || !mapData.floors.length || !navigator.geolocation) {
       if (!navigator.geolocation) setLocationState({ mode: 'denied', message: 'Location is off. You can still search or set your location manually.' });
       return undefined;
     }
-    setLocationState({ mode: 'locating', message: 'Locating you…' });
+    navigator.geolocation.getCurrentPosition(
+      () => {},
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 8000 },
+    );
+    if (!userLocation) setLocationState({ mode: 'locating', message: 'Locating you…' });
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
         const latLng = { lat: position.coords.latitude, lng: position.coords.longitude };
         const meters = haversineDistanceMeters(latLng, BUILDING_GEOFENCE.center);
-        if (isInsideBuildingGeofence(latLng, BUILDING_GEOFENCE)) {
+        if (userLocation) {
           setLocationState({
-            mode: 'nearBuilding',
+            mode: position.coords.accuracy > 40 ? 'indoorLowConfidence' : 'indoorUserConfirmed',
+            floorId: userLocation.floorId,
+            mapPoint: userLocation.point,
             gps: latLng,
             accuracy: position.coords.accuracy,
-            message: 'You’re near the building. For accurate indoor guidance, scan a QR code or set your starting point.',
+            message: position.coords.accuracy > 40
+              ? 'Indoor start set. GPS accuracy is low indoors, so update your position manually if needed.'
+              : 'Indoor start set. GPS is updating, but indoor accuracy may vary.',
+          });
+          return;
+        }
+        if (isInsideBuildingGeofence(latLng, BUILDING_GEOFENCE)) {
+          const saved = loadLastIndoorStart(mapData.floors);
+          const origin = saved || defaultRouteOrigin;
+          if (origin?.floorId) setActiveFloorId(origin.floorId);
+          setLocationState({
+            mode: position.coords.accuracy > 55 ? 'indoorLowConfidence' : 'indoorDefaultAnchor',
+            gps: latLng,
+            accuracy: position.coords.accuracy,
+            floorId: origin?.floorId,
+            mapPoint: origin?.point,
+            message: origin?.source === 'lastKnownIndoorStart'
+              ? 'Using your last start point. Tap Locate me to change.'
+              : 'Using Main Entrance as your start point. Tap Locate me to change.',
           });
         } else {
           setLocationState({
@@ -190,10 +281,10 @@ export default function App() {
             : 'Location is unavailable. Search or tap Locate me to set your indoor position.',
         });
       },
-      { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 },
+      { enableHighAccuracy: true, maximumAge: 1500, timeout: 10000 },
     );
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [adminMode, mapData.floors]);
+  }, [adminMode, mapData.floors, userLocation?.floorId, userLocation?.point?.x, userLocation?.point?.y, defaultRouteOrigin]);
 
   useEffect(() => {
     if (!isAdminUrl || buildingId) return;
@@ -230,6 +321,181 @@ export default function App() {
     setStatus({ type: 'success', message: `Generated ${graph.nodes.length} hallway nodes and ${graph.edges.length} edges for review.` });
   }
 
+  function addRouteGraphNode(point, type = routeNodeType) {
+    if (!activeFloor) return;
+    if (!Number.isFinite(point?.x) || !Number.isFinite(point?.y)) {
+      setRouteNodeMode(false);
+      setStatus({ type: 'error', message: 'That click was outside the map. Try Place node on map again and click directly on the hallway.' });
+      return;
+    }
+    const node = {
+      id: `${activeFloor.id}-manual-${Date.now().toString(36)}`,
+      floorId: activeFloor.id,
+      x: Math.round(point.x),
+      y: Math.round(point.y),
+      type,
+      name: `${type.replace('_', ' ')} node`,
+      source: 'admin',
+    };
+    updateRouteGraph(activeFloor.id, (current) => ({
+      floorId: activeFloor.id,
+      status: 'admin_reviewed',
+      nodes: [],
+      edges: [],
+      ...current,
+      nodes: [...(current.nodes || []), node],
+    }));
+    setRouteNodeMode(false);
+    setStatus({ type: 'success', message: 'Route node added. Select two manual nodes in Admin and tap Connect 2.' });
+  }
+
+  function addRoutePathPoint(point) {
+    if (!activeFloor) return;
+    if (!Number.isFinite(point?.x) || !Number.isFinite(point?.y)) {
+      setStatus({ type: 'error', message: 'That click was outside the map. Keep clicking directly on the hallway.' });
+      return;
+    }
+    const lastPoint = routePathLastPointRef.current;
+    if (lastPoint && Math.hypot(lastPoint.x - point.x, lastPoint.y - point.y) < 18) return;
+    routePathLastPointRef.current = point;
+    const previousNodeId = routePathDraftNodeIdsRef.current.at(-1);
+    const node = {
+      id: `${activeFloor.id}-path-${Date.now().toString(36)}-${Math.round(Math.random() * 1000)}`,
+      floorId: activeFloor.id,
+      x: Math.round(point.x),
+      y: Math.round(point.y),
+      type: 'hallway',
+      name: 'Learned route point',
+      source: 'admin',
+    };
+    updateRouteGraph(activeFloor.id, (current) => {
+      const nodes = [...(current.nodes || []), node];
+      const previousNode = previousNodeId ? nodes.find((item) => item.id === previousNodeId) : null;
+      const edges = [...(current.edges || [])];
+      if (previousNode) {
+        edges.push({
+          id: `${activeFloor.id}-path-edge-${Date.now().toString(36)}-${Math.round(Math.random() * 1000)}`,
+          floorId: activeFloor.id,
+          fromNodeId: previousNode.id,
+          toNodeId: node.id,
+          distance: Math.round(Math.hypot(previousNode.x - node.x, previousNode.y - node.y)),
+          accessible: true,
+          source: 'admin',
+        });
+      }
+      return {
+        floorId: activeFloor.id,
+        status: 'admin_reviewed',
+        nodes: [],
+        edges: [],
+        ...current,
+        nodes,
+        edges,
+      };
+    });
+    const nextDraft = [...routePathDraftNodeIdsRef.current, node.id];
+    routePathDraftNodeIdsRef.current = nextDraft;
+    setRoutePathDraftNodeIds(nextDraft);
+    setStatus({ type: 'success', message: nextDraft.length === 1 ? 'First route point added. Keep clicking along the hallway.' : `Route path has ${nextDraft.length} points. Finish when it reaches the destination.` });
+  }
+
+  function startRoutePathDrawing() {
+    routePathDraftNodeIdsRef.current = [];
+    routePathLastPointRef.current = null;
+    setRoutePathDraftNodeIds([]);
+    setRoutePathMode(true);
+    setRouteNodeMode(false);
+    setAddPoiMode(false);
+    setAreaDrawingMode(false);
+    setAreaDraftPoints([]);
+    setLocatingMode(false);
+    setStatus({ type: 'info', message: 'Pencil mode: drag along the hallway route you want.' });
+  }
+
+  function finishRoutePathDrawing() {
+    const pointCount = routePathDraftNodeIdsRef.current.length;
+    const draftIds = new Set(routePathDraftNodeIdsRef.current);
+    if (pointCount > 1 && activeFloor) {
+      updateRouteGraph(activeFloor.id, (current) => {
+        const nodes = [...(current.nodes || [])];
+        const edges = [...(current.edges || [])];
+        const draftNodes = routePathDraftNodeIdsRef.current
+          .map((id) => nodes.find((node) => node.id === id))
+          .filter(Boolean);
+        const first = draftNodes[0];
+        const last = draftNodes[draftNodes.length - 1];
+        const existingEdgeKeys = new Set(edges.map((edge) => routeEdgeKey(edge.fromNodeId, edge.toNodeId)));
+
+        [first, last].filter(Boolean).forEach((node, index) => {
+          const nearest = nearestAttachableRouteNode(node, nodes, draftIds);
+          if (!nearest?.node || nearest.distance > 260) return;
+          const key = routeEdgeKey(node.id, nearest.node.id);
+          if (existingEdgeKeys.has(key)) return;
+          existingEdgeKeys.add(key);
+          edges.push(learnedRouteEdge(activeFloor.id, node, nearest.node, index ? 'end' : 'start'));
+        });
+
+        if (routeDestination && routeDestinationFloor?.id === activeFloor.id && last) {
+          const destinationPoint = featureCenter(routeDestination);
+          const snapDistance = destinationPoint ? routeNodeDistance(last, destinationPoint) : 0;
+          const snapNode = {
+            id: `${activeFloor.id}-learned-destination-${routeDestination.id}-${Date.now().toString(36)}`,
+            floorId: activeFloor.id,
+            x: last.x,
+            y: last.y,
+            type: 'destination_approach',
+            name: `${formatFeatureLabel(routeDestination)} learned approach`,
+            linkedPoiId: routeDestination.id,
+            linkedFeatureId: routeDestination.id,
+            source: 'admin',
+          };
+          const existingSnap = nodes.find((node) => (
+            node.source === 'admin'
+            && node.linkedFeatureId === routeDestination.id
+            && routeNodeDistance(node, snapNode) < 12
+          ));
+          let destinationNode = existingSnap || null;
+          if (!destinationNode && snapDistance <= 420) {
+            destinationNode = snapNode;
+            nodes.push(destinationNode);
+          }
+          const key = destinationNode ? routeEdgeKey(last.id, destinationNode.id) : '';
+          if (destinationNode && !existingEdgeKeys.has(key) && last.id !== destinationNode.id) {
+            existingEdgeKeys.add(key);
+            edges.push(learnedRouteEdge(activeFloor.id, last, destinationNode, 'destination'));
+          }
+        }
+
+        return { ...current, status: 'admin_reviewed', nodes, edges };
+      });
+    }
+    routePathDraftNodeIdsRef.current = [];
+    routePathLastPointRef.current = null;
+    setRoutePathDraftNodeIds([]);
+    setRoutePathMode(false);
+    setStatus({
+      type: pointCount > 1 ? 'success' : 'error',
+      message: pointCount > 1
+        ? 'Learned route path saved and connected. Search the route again to use it.'
+        : 'Draw a longer route path by dragging along the hallway.',
+    });
+  }
+
+  function cancelRoutePathDrawing() {
+    if (!activeFloor) return;
+    const draftIds = new Set(routePathDraftNodeIdsRef.current);
+    updateRouteGraph(activeFloor.id, (current) => ({
+      ...current,
+      nodes: (current.nodes || []).filter((node) => !draftIds.has(node.id)),
+      edges: (current.edges || []).filter((edge) => !draftIds.has(edge.fromNodeId) && !draftIds.has(edge.toNodeId)),
+    }));
+    routePathDraftNodeIdsRef.current = [];
+    routePathLastPointRef.current = null;
+    setRoutePathDraftNodeIds([]);
+    setRoutePathMode(false);
+    setStatus({ type: 'idle', message: '' });
+  }
+
   function selectFloor(floorId) {
     const nextFloor = mapData.floors.find((floor) => floor.id === floorId);
     setActiveFloorId(floorId);
@@ -239,7 +505,22 @@ export default function App() {
     setAreaDrawingMode(false);
     setAreaDraftPoints([]);
     setAddPoiMode(false);
-    setLocatingMode(false);
+    setRouteNodeMode(false);
+    setRoutePathMode(false);
+    routePathDraftNodeIdsRef.current = [];
+    routePathLastPointRef.current = null;
+    setRoutePathDraftNodeIds([]);
+  }
+
+  function chooseStartFloor(floorId) {
+    selectFloor(floorId);
+    setLocatingMode(true);
+    setStartFloorPromptDismissed(true);
+    setLocationState({
+      mode: 'chooseIndoorStart',
+      floorId,
+      message: 'Tap your current position on the map so guidance starts from the right place.',
+    });
   }
 
   useEffect(() => {
@@ -252,6 +533,17 @@ export default function App() {
     () => mapData.floors.find((floor) => floor.id === activeFloorId) || mapData.floors[0],
     [mapData.floors, activeFloorId],
   );
+
+  useEffect(() => {
+    if (adminMode || userLocation || locatingMode || startFloorPromptDismissed || !defaultStartAnchor?.mapPoint) return;
+    setActiveFloorId(defaultStartAnchor.floorId);
+    setLocationState({
+      mode: 'indoorDefaultAnchor',
+      floorId: defaultStartAnchor.floorId,
+      mapPoint: defaultStartAnchor.mapPoint,
+      message: 'Using Main Entrance as your start point. Tap Locate me to change.',
+    });
+  }, [adminMode, userLocation, locatingMode, startFloorPromptDismissed, defaultStartAnchor]);
 
   const selectedFeature = useMemo(() => {
     if (!selectedId) return null;
@@ -268,18 +560,24 @@ export default function App() {
     return mapData.floors.find((floor) => floor.features.some((feature) => feature.id === routeDestinationId)) || null;
   }, [mapData.floors, routeDestinationId]);
 
+  const routeOrigin = useMemo(() => {
+    if (userLocation) return userLocation;
+    if (['outside', 'denied'].includes(locationState?.mode)) return null;
+    return defaultRouteOrigin;
+  }, [userLocation, locationState?.mode, defaultRouteOrigin]);
+
   const activeRoute = useMemo(() => {
-    if (!userLocation || !routeDestination || !routeDestinationFloor) return null;
+    if (!routeOrigin || !routeDestination || !routeDestinationFloor) return null;
     return planIndoorRoute({
       floors: mapData.floors,
-      originFloorId: userLocation.floorId,
-      originPoint: userLocation.point,
+      originFloorId: routeOrigin.floorId,
+      originPoint: routeOrigin.point,
       destinationFloorId: routeDestinationFloor.id,
       destinationFeature: routeDestination,
       routeGraphs,
       connectorPreference,
     });
-  }, [mapData.floors, userLocation, routeDestination, routeDestinationFloor, routeGraphs, connectorPreference]);
+  }, [mapData.floors, routeOrigin, routeDestination, routeDestinationFloor, routeGraphs, connectorPreference]);
 
   useEffect(() => {
     if (!voiceGuidance || !activeRoute) return;
@@ -561,9 +859,12 @@ export default function App() {
 
   function setLocation(point) {
     if (!activeFloor) return;
-    setUserLocation({ floorId: activeFloor.id, point });
+    const nextLocation = { floorId: activeFloor.id, point, source: 'userConfirmed' };
+    setUserLocation(nextLocation);
+    saveLastIndoorStart(nextLocation);
+    setStartFloorPromptDismissed(true);
     setLocationState({
-      mode: 'indoorAnchored',
+      mode: 'indoorUserConfirmed',
       floorId: activeFloor.id,
       mapPoint: point,
       message: 'Indoor start set. Phone GPS may still be inaccurate indoors.',
@@ -575,14 +876,27 @@ export default function App() {
     if (!feature) return;
     setSelectedId(feature.id);
     setHighlightId(feature.id);
+    setQuery(formatFeatureLabel(feature));
     setRouteDestinationId(feature.id);
-    if (!userLocation) {
-      setLocatingMode(true);
+    if (!userLocation && defaultRouteOrigin) {
+      setStartFloorPromptDismissed(true);
+      setActiveFloorId(defaultRouteOrigin.floorId);
       setLocationState({
-        mode: 'chooseIndoorStart',
-        message: 'Choose your current floor, then tap your position on the map to start navigation.',
+        mode: defaultRouteOrigin.source === 'lastKnownIndoorStart' ? 'indoorLowConfidence' : 'indoorDefaultAnchor',
+        floorId: defaultRouteOrigin.floorId,
+        mapPoint: defaultRouteOrigin.point,
+        message: defaultRouteOrigin.source === 'lastKnownIndoorStart'
+          ? 'Starting from your last saved start point. Tap Locate me to change.'
+          : 'Starting from Main Entrance. Tap Locate me to change start.',
       });
     }
+  }
+
+  function clearRoute() {
+    setRouteDestinationId('');
+    setSelectedId('');
+    setHighlightId('');
+    setQuery('');
   }
 
   function restoreHidden() {
@@ -674,10 +988,13 @@ export default function App() {
       areaDrawingMode={areaDrawingMode}
       areaDraftPoints={areaDraftPoints}
       selectedVertexIndex={selectedVertexIndex}
+      routeNodeMode={routeNodeMode}
+      routePathMode={routePathMode}
+      routePathDraftCount={routePathDraftNodeIds.length}
       locatingMode={locatingMode}
       userLocation={userLocation}
       locationState={locationState}
-      startAnchor={getDefaultStartAnchor(mapData.floors)}
+      startAnchor={defaultStartAnchor}
       routeGraphs={routeGraphs}
       activeRoute={activeRoute}
       connectorPreference={connectorPreference}
@@ -693,7 +1010,10 @@ export default function App() {
         if (floorId) selectFloor(floorId);
         setSelectedId(feature?.id || '');
         setHighlightId(feature?.id || '');
-        if (!adminMode && feature?.geometry?.type === 'Point') startRouteTo(feature, floorId);
+        if (!adminMode && featureCenter(feature)) {
+          setQuery(formatFeatureLabel(feature));
+          startRouteTo(feature, floorId);
+        }
       }}
       onHoverFeature={setHoveredId}
       onUpdateFeature={updateFeature}
@@ -709,28 +1029,51 @@ export default function App() {
       onDeleteFeature={deleteSelectedFeature}
       onUpdateRouteGraph={updateRouteGraph}
       onGenerateRouteGraph={generateActiveFloorRouteGraph}
+      onStartRoutePathDrawing={startRoutePathDrawing}
+      onFinishRoutePathDrawing={finishRoutePathDrawing}
+      onCancelRoutePathDrawing={cancelRoutePathDrawing}
+      onStartRouteNodePlacement={(type) => {
+        setRouteNodeType(type);
+        setAddPoiMode(false);
+        setAreaDrawingMode(false);
+        setAreaDraftPoints([]);
+        setLocatingMode(false);
+        setRoutePathMode(false);
+        setRouteNodeMode(true);
+        setStatus({ type: 'info', message: 'Click the hallway on the map to place a route node.' });
+      }}
       onQueryChange={setQuery}
       onHighlight={setHighlightId}
       onAddPoi={addPoi}
+      onAddRouteNode={addRouteGraphNode}
+      onAddRoutePathPoint={addRoutePathPoint}
       onSetLocation={setLocation}
       onToggleLocate={() => {
         setAddPoiMode(false);
         setAreaDrawingMode(false);
         setAreaDraftPoints([]);
+        setRouteNodeMode(false);
+        setRoutePathMode(false);
+        setStartFloorPromptDismissed(true);
         setLocatingMode((value) => !value);
       }}
+      showStartFloorPrompt={false}
+      onChooseStartFloor={chooseStartFloor}
+      onDismissStartFloorPrompt={() => setStartFloorPromptDismissed(true)}
       onRouteTo={startRouteTo}
       onConnectorPreferenceChange={setConnectorPreference}
       onToggleHighContrast={() => setHighContrast((value) => !value)}
       onToggleVoiceGuidance={() => setVoiceGuidance((value) => !value)}
       onRepeatInstruction={() => speakInstruction(currentRouteInstruction())}
-      onClearRoute={() => setRouteDestinationId('')}
+      onClearRoute={clearRoute}
       onToggleAdmin={() => setAdminMode((value) => !value)}
       onPublish={publishMap}
       onToggleAddPoi={() => {
         setLocatingMode(false);
         setAreaDrawingMode(false);
         setAreaDraftPoints([]);
+        setRouteNodeMode(false);
+        setRoutePathMode(false);
         setAddPoiMode((value) => !value);
       }}
       onRestoreHidden={restoreHidden}

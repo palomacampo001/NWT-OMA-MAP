@@ -1,4 +1,8 @@
 export default function FloorSelector({ floors, activeFloorId, routeFloorIds = [], onSelectFloor, compact = false }) {
+  function shortFloorName(name) {
+    return String(name || '').replace(/^Floor\s+/i, '');
+  }
+
   return (
     <section className={compact ? 'floor-selector compact' : 'panel-section floor-selector'}>
       {!compact && <h2>Floors</h2>}
@@ -15,7 +19,7 @@ export default function FloorSelector({ floors, activeFloorId, routeFloorIds = [
             aria-pressed={floor.id === activeFloorId}
             aria-label={`Show ${floor.name}${routeFloorIds.includes(floor.id) ? ', included in current route' : ''}`}
           >
-            {floor.name}
+            {compact ? shortFloorName(floor.name) : floor.name}
             {!compact && <span>{floor.features.length} features</span>}
           </button>
         ))}

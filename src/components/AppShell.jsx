@@ -25,6 +25,9 @@ export default function AppShell({
   areaDrawingMode,
   areaDraftPoints,
   selectedVertexIndex,
+  routeNodeMode,
+  routePathMode,
+  routePathDraftCount,
   locatingMode,
   userLocation,
   locationState,
@@ -35,6 +38,7 @@ export default function AppShell({
   routeDestinationId,
   highContrast,
   voiceGuidance,
+  showStartFloorPrompt,
   buildingId,
   adminMode,
   published,
@@ -55,11 +59,19 @@ export default function AppShell({
   onDeleteFeature,
   onUpdateRouteGraph,
   onGenerateRouteGraph,
+  onStartRoutePathDrawing,
+  onFinishRoutePathDrawing,
+  onCancelRoutePathDrawing,
+  onStartRouteNodePlacement,
   onQueryChange,
   onHighlight,
   onAddPoi,
+  onAddRouteNode,
+  onAddRoutePathPoint,
   onSetLocation,
   onToggleLocate,
+  onChooseStartFloor,
+  onDismissStartFloorPrompt,
   onRouteTo,
   onConnectorPreferenceChange,
   onToggleHighContrast,
@@ -211,6 +223,13 @@ export default function AppShell({
                 <RouteGraphEditor
                   floor={activeFloor}
                   graph={routeGraphs?.[activeFloorId]}
+                  routeNodeMode={routeNodeMode}
+                  routePathMode={routePathMode}
+                  routePathDraftCount={routePathDraftCount}
+                  onStartNodePlacement={onStartRouteNodePlacement}
+                  onStartPathDrawing={onStartRoutePathDrawing}
+                  onFinishPathDrawing={onFinishRoutePathDrawing}
+                  onCancelPathDrawing={onCancelRoutePathDrawing}
                   onUpdateGraph={(updater) => onUpdateRouteGraph(activeFloorId, updater)}
                   onGenerateGraph={onGenerateRouteGraph}
                 />
@@ -232,6 +251,8 @@ export default function AppShell({
               areaDraftPoints={areaDraftPoints}
               selectedVertexIndex={selectedVertexIndex}
               locatingMode={locatingMode}
+              routeNodeMode={routeNodeMode}
+              routePathMode={routePathMode}
               userLocation={userLocation}
               locationState={locationState}
               startAnchor={startAnchor}
@@ -241,6 +262,9 @@ export default function AppShell({
               onSelectFeature={(feature) => onSelectFeature(feature, activeFloor?.id)}
               onHoverFeature={onHoverFeature}
               onAddPoi={onAddPoi}
+              onAddRouteNode={onAddRouteNode}
+              onAddRoutePathPoint={onAddRoutePathPoint}
+              onFinishRoutePathDrawing={onFinishRoutePathDrawing}
               onAddAreaPoint={onAddAreaPoint}
               onUpdateAreaVertex={onUpdateAreaVertex}
               onInsertAreaVertex={onInsertAreaVertex}
@@ -259,6 +283,7 @@ export default function AppShell({
           <NavigationDrawer
             route={activeRoute}
             activeFloorId={activeFloorId}
+            userLocation={userLocation}
             voiceGuidance={voiceGuidance}
             onSelectFloor={onSelectFloor}
             onClearRoute={onClearRoute}
@@ -297,6 +322,31 @@ export default function AppShell({
           />}
         </aside>
       </main>
+      {showStartFloorPrompt && (
+        <section className="start-floor-prompt" role="dialog" aria-modal="true" aria-labelledby="start-floor-title">
+          <div className="start-floor-card">
+            <div className="start-floor-copy">
+              <span className="eyebrow">Before we route</span>
+              <h2 id="start-floor-title">What floor are you on?</h2>
+              <p>Pick your current floor, then tap your spot on the map. No Wrong Turns will start guidance from there.</p>
+            </div>
+            <div className="start-floor-grid" aria-label="Choose your current floor">
+              {mapData.floors.map((floor) => (
+                <button
+                  key={floor.id}
+                  className={floor.id === activeFloorId ? 'start-floor-button active' : 'start-floor-button'}
+                  onClick={() => onChooseStartFloor(floor.id)}
+                >
+                  {floor.name}
+                </button>
+              ))}
+            </div>
+            <div className="start-floor-actions">
+              <button className="secondary-button" onClick={onDismissStartFloorPrompt}>I’ll choose later</button>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

@@ -9,24 +9,24 @@
         "coordinates": [
           [
             [
-              328,
-              128
+              24,
+              24
             ],
             [
-              1832,
-              128
+              1528,
+              24
             ],
             [
-              1832,
-              3096
+              1528,
+              2992
             ],
             [
-              328,
-              3096
+              24,
+              2992
             ],
             [
-              328,
-              128
+              24,
+              24
             ]
           ]
         ]
@@ -42,39 +42,39 @@
     },
     {
       "type": "Feature",
-      "id": "floor-directory-10-zone_c-2",
+      "id": "floor-directory-10-amenity-2",
       "geometry": {
         "type": "Polygon",
         "coordinates": [
           [
             [
-              752,
+              760,
+              1080
+            ],
+            [
+              864,
+              1080
+            ],
+            [
+              864,
               1152
             ],
             [
-              976,
+              760,
               1152
             ],
             [
-              976,
-              1192
-            ],
-            [
-              752,
-              1192
-            ],
-            [
-              752,
-              1152
+              760,
+              1080
             ]
           ]
         ]
       },
       "properties": {
-        "id": "floor-directory-10-zone_c-2",
+        "id": "floor-directory-10-amenity-2",
         "floorId": "floor-directory-10",
-        "name": "Zone C",
-        "category": "zone_c",
+        "name": "Amenity",
+        "category": "amenity",
         "source": "directory-pdf-color-segmentation",
         "editable": true
       }
@@ -87,24 +87,24 @@
         "coordinates": [
           [
             [
-              1064,
-              1184
+              864,
+              1240
             ],
             [
-              1488,
-              1184
+              1184,
+              1240
             ],
             [
-              1488,
-              1192
+              1184,
+              1248
             ],
             [
-              1064,
-              1192
+              864,
+              1248
             ],
             [
-              1064,
-              1184
+              864,
+              1240
             ]
           ]
         ]
@@ -120,78 +120,78 @@
     },
     {
       "type": "Feature",
-      "id": "floor-directory-10-amenity-4",
+      "id": "floor-directory-10-zone_c-4",
       "geometry": {
         "type": "Polygon",
         "coordinates": [
           [
             [
-              1064,
-              1192
+              864,
+              1312
             ],
             [
-              1168,
-              1192
+              1184,
+              1312
             ],
             [
-              1168,
-              1256
+              1184,
+              1320
             ],
             [
-              1064,
-              1256
+              864,
+              1320
             ],
             [
-              1064,
-              1192
+              864,
+              1312
             ]
           ]
         ]
       },
       "properties": {
-        "id": "floor-directory-10-amenity-4",
+        "id": "floor-directory-10-zone_c-4",
         "floorId": "floor-directory-10",
-        "name": "Amenity",
-        "category": "amenity",
+        "name": "Zone C",
+        "category": "zone_c",
         "source": "directory-pdf-color-segmentation",
         "editable": true
       }
     },
     {
       "type": "Feature",
-      "id": "floor-directory-10-zone_c-5",
+      "id": "floor-directory-10-amenity-5",
       "geometry": {
         "type": "Polygon",
         "coordinates": [
           [
             [
-              1064,
-              1256
+              864,
+              1408
             ],
             [
-              1488,
-              1256
+              1040,
+              1408
             ],
             [
-              1488,
-              1264
+              1040,
+              1496
             ],
             [
-              1064,
-              1264
+              864,
+              1496
             ],
             [
-              1064,
-              1256
+              864,
+              1408
             ]
           ]
         ]
       },
       "properties": {
-        "id": "floor-directory-10-zone_c-5",
+        "id": "floor-directory-10-amenity-5",
         "floorId": "floor-directory-10",
-        "name": "Zone C",
-        "category": "zone_c",
+        "name": "Amenity",
+        "category": "amenity",
         "source": "directory-pdf-color-segmentation",
         "editable": true
       }
@@ -204,24 +204,24 @@
         "coordinates": [
           [
             [
-              1168,
-              1512
+              632,
+              1912
             ],
             [
-              1344,
-              1512
+              760,
+              1912
             ],
             [
-              1344,
-              1600
+              760,
+              2000
             ],
             [
-              1168,
-              1600
+              632,
+              2000
             ],
             [
-              1168,
-              1512
+              632,
+              1912
             ]
           ]
         ]
@@ -243,24 +243,24 @@
         "coordinates": [
           [
             [
-              936,
-              2016
-            ],
-            [
-              1064,
-              2016
-            ],
-            [
-              1064,
+              256,
               2104
             ],
             [
-              936,
+              760,
               2104
             ],
             [
-              936,
-              2016
+              760,
+              2216
+            ],
+            [
+              256,
+              2216
+            ],
+            [
+              256,
+              2104
             ]
           ]
         ]
@@ -282,24 +282,24 @@
         "coordinates": [
           [
             [
-              992,
-              2216
+              864,
+              2304
             ],
             [
-              1064,
-              2216
+              1040,
+              2304
             ],
             [
-              1064,
-              2320
+              1040,
+              2392
             ],
             [
-              992,
-              2320
+              864,
+              2392
             ],
             [
-              992,
-              2216
+              864,
+              2304
             ]
           ]
         ]
@@ -321,24 +321,24 @@
         "coordinates": [
           [
             [
-              1168,
-              2416
+              864,
+              2400
             ],
             [
-              1344,
-              2416
+              1040,
+              2400
             ],
             [
-              1344,
-              2592
+              1040,
+              2488
             ],
             [
-              1168,
-              2592
+              864,
+              2488
             ],
             [
-              1168,
-              2416
+              864,
+              2400
             ]
           ]
         ]
@@ -360,24 +360,24 @@
         "coordinates": [
           [
             [
-              992,
+              688,
+              2720
+            ],
+            [
+              760,
+              2720
+            ],
+            [
+              760,
               2824
             ],
             [
-              1064,
+              688,
               2824
             ],
             [
-              1064,
-              2936
-            ],
-            [
-              992,
-              2936
-            ],
-            [
-              992,
-              2824
+              688,
+              2720
             ]
           ]
         ]

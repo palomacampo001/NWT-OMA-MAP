@@ -1,5 +1,12 @@
 import { bboxCenter, distance } from './geometryHelpers.js';
-import { nearestRouteNode, nodesToPoints, shortestGraphPath } from './routeGraphs.js';
+import {
+  alternateGraphPaths,
+  nearestRouteNode,
+  nodesToPoints,
+  pathDistance,
+  repairHallwayGraph,
+  shortestGraphPath,
+} from './routeGraphs.js';
 
 export function featureCenter(feature) {
   if (!feature) return null;
@@ -171,6 +178,37 @@ function dedupePath(points) {
   });
 }
 
+function graphHasDirectEdge(a, b, graph) {
+  if (!a?.id || !b?.id) return false;
+  return (graph?.edges || []).some((edge) => (
+    (edge.fromNodeId === a.id && edge.toNodeId === b.id)
+    || (edge.fromNodeId === b.id && edge.toNodeId === a.id)
+  ));
+}
+
+function simplifyGraphRoute(points, graph) {
+  const clean = dedupePath(points);
+  if (clean.length <= 2) return clean;
+  const simplified = [clean[0]];
+  let cursor = 0;
+  while (cursor < clean.length - 1) {
+    let next = cursor + 1;
+    for (let candidate = clean.length - 1; candidate > cursor + 1; candidate -= 1) {
+      const direct = distance(clean[cursor], clean[candidate]);
+      const via = clean.slice(cursor, candidate + 1).reduce((sum, point, index, segment) => (
+        index ? sum + distance(segment[index - 1], point) : sum
+      ), 0);
+      if (via > direct * 1.18 && graphHasDirectEdge(clean[cursor], clean[candidate], graph)) {
+        next = candidate;
+        break;
+      }
+    }
+    simplified.push(clean[next]);
+    cursor = next;
+  }
+  return dedupePath(simplified);
+}
+
 function orthogonalBetween(a, b, prefer = 'horizontal') {
   if (!a || !b) return [];
   if (Math.abs(a.x - b.x) < 1 || Math.abs(a.y - b.y) < 1) return [a, b];
@@ -246,7 +284,7 @@ function findDestinationApproachNode(destinationFeature, destinationPoint, graph
     || node.linkedPoiId === destinationFeature?.id
     || node.connectorGroupId === destinationFeature?.id
   ));
-  if (linked) return linked;
+  if (linked && distance(linked, destinationPoint) <= 220) return linked;
   const preferences = [
     new Set(['destination_approach', 'destination_snap']),
     new Set(['doorway']),
@@ -270,6 +308,46 @@ function findConnectorGraphNode(connector, graph) {
   ));
   if (linked) return linked;
   return nearestGraphNode(connector.point, graph, new Set([type])) || nearestGraphNode(connector.point, graph);
+}
+
+function routeNeedsRepair(nodePath, start, end) {
+  if (!start || !end) return false;
+  if (!nodePath?.length) return true;
+  const directDistance = Math.max(1, distance(start, end));
+  const routeDistance = pathDistance(nodePath);
+  return routeDistance > directDistance * 1.7;
+}
+
+function findBestGraphPath(graph, start, end, { accessibleOnly = false } = {}) {
+  const initialPath = shortestGraphPath(graph, start?.id, end?.id, { accessibleOnly });
+  let activeGraph = graph;
+  let nodePath = initialPath;
+  let repaired = false;
+  let addedEdges = 0;
+
+  if (routeNeedsRepair(initialPath, start, end)) {
+    const repair = repairHallwayGraph(graph);
+    addedEdges = repair.addedEdges || 0;
+    activeGraph = repair.graph || graph;
+    const repairedPath = shortestGraphPath(activeGraph, start?.id, end?.id, { accessibleOnly });
+    if (repairedPath?.length) {
+      const initialDistance = initialPath?.length ? pathDistance(initialPath) : Number.POSITIVE_INFINITY;
+      const repairedDistance = pathDistance(repairedPath);
+      if (!initialPath?.length || repairedDistance < initialDistance * 0.97) {
+        nodePath = repairedPath;
+        repaired = activeGraph !== graph || addedEdges > 0;
+      }
+    }
+  }
+
+  return {
+    graph: activeGraph,
+    nodePath,
+    repaired,
+    addedEdges,
+    routeDistance: nodePath?.length ? pathDistance(nodePath) : 0,
+    directDistance: start && end ? distance(start, end) : 0,
+  };
 }
 
 function unavailableRoute({ floorId, destinationId, destinationName, activeFloorIds, reason, legs = [] }) {
@@ -377,10 +455,26 @@ function graphLeg({ id, floor, graph, from, to, destinationName, instruction, co
     : destinationFeature
       ? findDestinationApproachNode(destinationFeature, to, graph)
       : nearestGraphNode(to, graph);
-  const nodePath = shortestGraphPath(graph, start?.id, end?.id, { accessibleOnly });
+  const bestPath = findBestGraphPath(graph, start, end, { accessibleOnly });
+  const nodePath = bestPath.nodePath;
   if (!nodePath?.length) return null;
   const graphPoints = nodesToPoints(nodePath);
-  const points = dedupePath(graphPoints);
+  const routeGraph = bestPath.graph || graph;
+  const points = simplifyGraphRoute(graphPoints, routeGraph);
+  const alternatives = alternateGraphPaths(routeGraph, nodePath, { accessibleOnly, limit: 2 })
+    .map((path, index) => {
+      const alternativePoints = simplifyGraphRoute(nodesToPoints(path), routeGraph);
+      const alternativeDistance = alternativePoints.reduce((sum, point, pointIndex) => (
+        pointIndex ? sum + distance(alternativePoints[pointIndex - 1], point) : sum
+      ), 0);
+      return {
+        id: `${id}-alternative-${index + 1}`,
+        label: `Alternative ${index + 1}`,
+        points: alternativePoints,
+        distance: alternativeDistance,
+      };
+    })
+    .filter((alternative) => alternative.points.length > 1);
   const distanceTotal = points.reduce((sum, point, index) => (index ? sum + distance(points[index - 1], point) : sum), 0);
   const nextPoint = points[1] || points[0] || to;
   const endPoint = points[points.length - 1];
@@ -406,6 +500,16 @@ function graphLeg({ id, floor, graph, from, to, destinationName, instruction, co
     destinationName,
     connector,
     endpointConnector,
+    alternatives,
+    debug: {
+      repaired: bestPath.repaired,
+      repairEdgesAdded: bestPath.addedEdges,
+      graphNodes: routeGraph.nodes?.length || 0,
+      graphEdges: routeGraph.edges?.length || 0,
+      routeDistance: bestPath.routeDistance,
+      directDistance: bestPath.directDistance,
+      distanceRatio: bestPath.directDistance ? bestPath.routeDistance / bestPath.directDistance : 0,
+    },
     instructions: [{ id: `${id}-step`, text: instruction, distance: distanceTotal, direction: 'graph' }],
   };
 }
@@ -524,6 +628,7 @@ function routeFromLegs({ id, originFloorId, destinationFloorId, destinationFeatu
       : [leg.floorId]
   )).filter(Boolean))];
   const transfer = legs.find((leg) => leg.type === 'transfer');
+  const alternatives = walkLegs.flatMap((leg) => (leg.alternatives || []).map((alternative) => ({ ...alternative, floorId: leg.floorId })));
   return {
     id,
     originFloorId,
@@ -541,6 +646,7 @@ function routeFromLegs({ id, originFloorId, destinationFloorId, destinationFeatu
     legs,
     activeFloorIds,
     transfer,
+    alternatives,
     instructions,
     notice: notice || (hasPreview ? 'Approximate guidance shown — follow visible hallways.' : 'Hallway route shown.'),
   };
@@ -891,6 +997,7 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
       });
     }
     const leg = graphRoute;
+    const alternatives = (leg.alternatives || []).map((alternative) => ({ ...alternative, floorId: originFloorId }));
     return {
       id: `route-${originFloorId}-${destinationFloorId}-${destinationFeature.id}`,
       originFloorId,
@@ -907,6 +1014,7 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
       distance: leg.distance,
       legs: [leg],
       activeFloorIds: [originFloorId],
+      alternatives,
       instructions: leg.instructions,
       accessible: connectorPreference === 'accessible',
       notice: connectorPreference === 'accessible' ? 'Accessible hallway route shown.' : 'Hallway route shown.',
@@ -1046,6 +1154,10 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
     }],
   };
   const instructions = [...originLeg.instructions, ...transfer.instructions, ...destinationLeg.instructions].map((step, index) => ({ ...step, text: `${index + 1}. ${step.text.replace(/^\d+\.\s*/, '')}` }));
+  const alternatives = [
+    ...(originLeg.alternatives || []).map((alternative) => ({ ...alternative, floorId: originFloorId })),
+    ...(destinationLeg.alternatives || []).map((alternative) => ({ ...alternative, floorId: destinationFloorId })),
+  ];
   return {
     id: `route-${originFloorId}-${destinationFloorId}-${destinationFeature.id}`,
     originFloorId,
@@ -1064,6 +1176,7 @@ export function planIndoorRoute({ floors, originFloorId, originPoint, destinatio
     distance: originLeg.distance + destinationLeg.distance,
     legs: [originLeg, transfer, destinationLeg],
     activeFloorIds: [originFloorId, destinationFloorId],
+    alternatives,
     transfer,
     instructions,
     notice: 'Hallway route shown.',

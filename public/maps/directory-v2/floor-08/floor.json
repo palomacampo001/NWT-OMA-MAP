@@ -5,8 +5,14 @@
   "viewBox": [
     0,
     0,
-    2160,
-    3240
+    1552,
+    3010
+  ],
+  "cropBounds": [
+    304,
+    106,
+    1856,
+    3116
   ],
   "background": "background.png",
   "spaces": "spaces.geojson",

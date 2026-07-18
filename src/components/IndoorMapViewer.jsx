@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import { AlertTriangle, Compass, Crosshair, LocateFixed, Navigation, Plus } from 'lucide-react';
 import { featureCenter } from '../utils/navigation.js';
@@ -66,7 +66,7 @@ function hasUsefulLabel(feature) {
 
 function isVisualFeature(feature, viewBox) {
   if (feature.visible === false || feature.category === 'decorative' || feature.geometry?.type === 'LineString') return false;
-  if (!['room', 'poi', 'custom_area'].includes(feature.type)) return false;
+  if (!['room', 'poi', 'custom_area', 'space'].includes(feature.type)) return false;
   if (feature.category === 'corridor' || feature.category === 'unknown' || feature.confidence < 0.75) return false;
   if (feature.sourceSvg?.preparedPackage || feature.sourceSvg?.manualApproved) return true;
   if (feature.geometry?.type === 'Polygon' && !['rect', 'polygon'].includes(feature.sourceSvg?.tag)) return false;
@@ -91,6 +91,10 @@ function pointLatLng(point) {
 
 function floorBoundsFromViewBox(viewBox) {
   return L.latLngBounds([viewBox[1], viewBox[0]], [viewBox[1] + viewBox[3], viewBox[0] + viewBox[2]]);
+}
+
+function shortFloorName(name) {
+  return String(name || '').replace(/^Floor\s+/i, '');
 }
 
 function boundsFromFeatures(features = [], fallbackBounds) {
@@ -287,6 +291,8 @@ export default function IndoorMapViewer({
   areaDraftPoints = [],
   selectedVertexIndex,
   locatingMode,
+  routeNodeMode,
+  routePathMode,
   userLocation,
   locationState,
   startAnchor,
@@ -296,6 +302,9 @@ export default function IndoorMapViewer({
   onSelectFeature,
   onHoverFeature,
   onAddPoi,
+  onAddRouteNode,
+  onAddRoutePathPoint,
+  onFinishRoutePathDrawing,
   onAddAreaPoint,
   onUpdateAreaVertex,
   onInsertAreaVertex,
@@ -310,12 +319,19 @@ export default function IndoorMapViewer({
   const routeRef = useRef(null);
   const graphRef = useRef(null);
   const areaEditRef = useRef(null);
+  const routePathDrawingRef = useRef(false);
   const userMarkerRef = useRef(null);
   const anchorMarkerRef = useRef(null);
+  const gestureGuardRef = useRef({ dragging: false, blockUntil: 0 });
   const addPoiModeRef = useRef(addPoiMode);
   const areaDrawingModeRef = useRef(areaDrawingMode);
   const locatingModeRef = useRef(locatingMode);
+  const routeNodeModeRef = useRef(routeNodeMode);
+  const routePathModeRef = useRef(routePathMode);
+  const lastRouteFitRef = useRef('');
+  const lastFollowPanRef = useRef(0);
   const [trackingMode, setTrackingMode] = useState(false);
+  const [deviceHeading, setDeviceHeading] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(0);
   const [baseZoom, setBaseZoom] = useState(0);
   const [floorTransitioning, setFloorTransitioning] = useState(false);
@@ -351,11 +367,37 @@ export default function IndoorMapViewer({
     };
   }, [visualFeatures, floor?.features, selectedId, highlightId, zoomLevel, baseZoom, activeRoute, layerOptions]);
 
+  const canUseFeatureClick = useCallback(() => {
+    const guard = gestureGuardRef.current;
+    return !guard.dragging && Date.now() >= guard.blockUntil;
+  }, []);
+
   useEffect(() => {
     addPoiModeRef.current = addPoiMode;
     areaDrawingModeRef.current = areaDrawingMode;
     locatingModeRef.current = locatingMode;
-  }, [addPoiMode, areaDrawingMode, locatingMode]);
+    routeNodeModeRef.current = routeNodeMode;
+    routePathModeRef.current = routePathMode;
+  }, [addPoiMode, areaDrawingMode, locatingMode, routeNodeMode, routePathMode]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('DeviceOrientationEvent' in window)) return undefined;
+    const handleOrientation = (event) => {
+      const heading = Number.isFinite(event.webkitCompassHeading)
+        ? event.webkitCompassHeading
+        : Number.isFinite(event.alpha)
+          ? 360 - event.alpha
+          : null;
+      if (heading == null) return;
+      setDeviceHeading(heading);
+    };
+    window.addEventListener('deviceorientation', handleOrientation, true);
+    window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+    return () => {
+      window.removeEventListener('deviceorientation', handleOrientation, true);
+      window.removeEventListener('deviceorientationabsolute', handleOrientation, true);
+    };
+  }, []);
 
   useEffect(() => {
     if (!floor?.id) return undefined;
@@ -382,10 +424,37 @@ export default function IndoorMapViewer({
       map.getPane(name).style.zIndex = String(zIndex);
     });
     L.control.zoom({ position: 'topleft' }).addTo(map);
-    map.on('zoomend', () => setZoomLevel(map.getZoom()));
-    map.on('dragstart', () => setTrackingMode(false));
+    const blockFeatureClicks = (duration = 240) => {
+      gestureGuardRef.current.blockUntil = Date.now() + duration;
+    };
+    const handleZoomStart = () => blockFeatureClicks(360);
+    const handleZoomEnd = () => {
+      setZoomLevel(map.getZoom());
+      blockFeatureClicks(260);
+    };
+    const handleDragStart = () => {
+      setTrackingMode(false);
+      gestureGuardRef.current.dragging = true;
+      blockFeatureClicks(360);
+    };
+    const handleDragEnd = () => {
+      gestureGuardRef.current.dragging = false;
+      blockFeatureClicks(260);
+    };
+    map.on('zoomstart', handleZoomStart);
+    map.on('zoomend', handleZoomEnd);
+    map.on('dragstart', handleDragStart);
+    map.on('dragend', handleDragEnd);
     map.on('click', (event) => {
       const point = { x: event.latlng.lng, y: event.latlng.lat };
+      if (routeNodeModeRef.current) {
+        onAddRouteNode?.(point);
+        return;
+      }
+      if (routePathModeRef.current) {
+        onAddRoutePathPoint?.(point);
+        return;
+      }
       if (areaDrawingModeRef.current) {
         onAddAreaPoint(point);
         return;
@@ -404,7 +473,7 @@ export default function IndoorMapViewer({
     graphRef.current = L.layerGroup().addTo(map);
     areaEditRef.current = L.layerGroup().addTo(map);
     requestAnimationFrame(() => map.invalidateSize());
-  }, [onAddPoi, onAddAreaPoint, onSetLocation]);
+  }, [onAddPoi, onAddRouteNode, onAddRoutePathPoint, onAddAreaPoint, onSetLocation]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -471,8 +540,21 @@ export default function IndoorMapViewer({
     if (!group) return;
     group.clearLayers();
     if (!adminMode || !routeGraph) return;
-    const byId = new Map((routeGraph.nodes || []).map((node) => [node.id, node]));
-    (routeGraph.edges || []).forEach((edge) => {
+    const allNodes = routeGraph.nodes || [];
+    const allEdges = routeGraph.edges || [];
+    const adminNodes = allNodes.filter((node) => node.source === 'admin');
+    const previewNodes = allNodes.filter((node) => node.source !== 'admin').slice(0, 550);
+    const visibleNodeIds = new Set([...previewNodes, ...adminNodes].map((node) => node.id));
+    const byId = new Map(allNodes.map((node) => [node.id, node]));
+    const previewEdges = [
+      ...allEdges.filter((edge) => edge.source === 'admin'),
+      ...allEdges.filter((edge) => (
+        edge.source !== 'admin'
+        && visibleNodeIds.has(edge.fromNodeId)
+        && visibleNodeIds.has(edge.toNodeId)
+      )).slice(0, 900),
+    ];
+    previewEdges.forEach((edge) => {
       const from = byId.get(edge.fromNodeId);
       const to = byId.get(edge.toNodeId);
       if (!from || !to) return;
@@ -485,13 +567,13 @@ export default function IndoorMapViewer({
         interactive: false,
       }).addTo(group);
     });
-    (routeGraph.nodes || []).forEach((node) => {
+    [...previewNodes, ...adminNodes].forEach((node) => {
       L.circleMarker(pointLatLng(node), {
         pane: 'graphPane',
-        radius: ['elevator', 'stair', 'escalator', 'entrance', 'reception'].includes(node.type) ? 5 : 3.5,
+        radius: node.source === 'admin' ? 6 : ['elevator', 'stair', 'escalator', 'entrance', 'reception'].includes(node.type) ? 5 : 3.5,
         color: '#ffffff',
         weight: 2,
-        fillColor: floorAccent,
+        fillColor: node.source === 'admin' ? '#0f62fe' : floorAccent,
         fillOpacity: 0.92,
         opacity: 1,
         interactive: false,
@@ -566,7 +648,10 @@ export default function IndoorMapViewer({
             : L.divIcon({ className: '', html: markerHtml(feature, variant), iconSize: active ? [34, 34] : major ? [20, 20] : [6, 6], iconAnchor: active ? [17, 17] : major ? [10, 10] : [3, 3] }),
         });
         if (!areaDrawingMode && !locatingMode) {
-          marker.on('click', () => onSelectFeature(feature));
+          marker.on('click', (event) => {
+            if (event.originalEvent) L.DomEvent.stopPropagation(event.originalEvent);
+            if (canUseFeatureClick()) onSelectFeature(feature);
+          });
           marker.on('mouseover', () => onHoverFeature(feature.id));
         }
         marker.addTo(group);
@@ -585,7 +670,10 @@ export default function IndoorMapViewer({
         ...overviewStyle,
       });
       if (!areaDrawingMode) {
-        overviewPolygon.on('click', () => onSelectFeature(feature));
+        overviewPolygon.on('click', (event) => {
+          if (event.originalEvent) L.DomEvent.stopPropagation(event.originalEvent);
+          if (canUseFeatureClick()) onSelectFeature(feature);
+        });
         overviewPolygon.on('mouseover', () => onHoverFeature(feature.id));
         overviewPolygon.on('mouseout', () => onHoverFeature(''));
       }
@@ -600,7 +688,10 @@ export default function IndoorMapViewer({
         ...style,
       });
       if (!areaDrawingMode) {
-        polygon.on('click', () => onSelectFeature(feature));
+        polygon.on('click', (event) => {
+          if (event.originalEvent) L.DomEvent.stopPropagation(event.originalEvent);
+          if (canUseFeatureClick()) onSelectFeature(feature);
+        });
         polygon.on('mouseover', () => onHoverFeature(feature.id));
         polygon.on('mouseout', () => onHoverFeature(''));
       }
@@ -613,7 +704,7 @@ export default function IndoorMapViewer({
         addLabel(group, feature, center, 'quiet');
       }
     });
-  }, [visualFeatures, selectedId, hoveredId, highlightId, onSelectFeature, onHoverFeature, viewBox, zoomLevel, baseZoom, floorAccent, lod.isLow, lod.isVeryHigh, activeRoute, layerOptions, areaDrawingMode, locatingMode]);
+  }, [visualFeatures, selectedId, hoveredId, highlightId, onSelectFeature, onHoverFeature, viewBox, zoomLevel, baseZoom, floorAccent, lod.isLow, lod.isVeryHigh, activeRoute, layerOptions, areaDrawingMode, locatingMode, canUseFeatureClick]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -629,10 +720,36 @@ export default function IndoorMapViewer({
     const map = mapRef.current;
     if (!group || !map) return;
     group.clearLayers();
-    const showUserArrow = userLocation?.floorId === floor?.id;
+    const activeLegStart = activeFloorLeg?.points?.[0] || null;
+    const activeLegNext = activeFloorLeg?.points?.[1] || null;
+    const userArrowPoint = userLocation?.floorId === floor?.id
+      ? userLocation.point
+      : activeRoute && activeLegStart
+        ? activeLegStart
+        : null;
+    const routeArrowHeading = userLocation?.floorId === floor?.id
+      ? activeFloorLeg?.heading ?? activeRoute?.heading ?? 0
+      : activeLegStart && activeLegNext
+        ? Math.atan2(activeLegNext.y - activeLegStart.y, activeLegNext.x - activeLegStart.x) * (180 / Math.PI) + 90
+        : activeFloorLeg?.heading ?? activeRoute?.heading ?? 0;
+    const userArrowHeading = Number.isFinite(deviceHeading) ? deviceHeading : routeArrowHeading;
+    const showUserArrow = Boolean(userArrowPoint);
     if (canDrawRouteLine(activeFloorLeg)) {
       const routeLatLngs = activeFloorLeg.points.map(pointLatLng);
       const approximate = ['approximateGuidance', 'previewGuidance'].includes(activeFloorLeg.quality);
+      (activeFloorLeg.alternatives || []).forEach((alternative) => {
+        if (!alternative.points?.length) return;
+        L.polyline(alternative.points.map(pointLatLng), {
+          pane: 'routePane',
+          color: '#5a8dee',
+          weight: 4,
+          opacity: 0.55,
+          lineCap: 'round',
+          lineJoin: 'round',
+          dashArray: '6 14',
+          className: 'route-line-alternative',
+        }).addTo(group);
+      });
       const halo = L.polyline(routeLatLngs, {
         pane: 'routeHaloPane',
         color: '#ffffff',
@@ -700,25 +817,30 @@ export default function IndoorMapViewer({
       userMarkerRef.current.remove();
       userMarkerRef.current = null;
     }
-    if (userLocation?.floorId === floor?.id) {
-      const userHeading = activeFloorLeg?.heading ?? activeRoute?.heading ?? 0;
-      userMarkerRef.current = L.marker(pointLatLng(userLocation.point), {
+    if (userArrowPoint) {
+      userMarkerRef.current = L.marker(pointLatLng(userArrowPoint), {
         pane: 'endpointPane',
         icon: L.divIcon({
           className: '',
-          html: `<div class="leaflet-you-ring"></div><div class="leaflet-you-heading" style="transform: rotate(${userHeading}deg)"><div class="leaflet-you-arrow"></div></div>`,
+          html: `<div class="leaflet-you-ring"></div><div class="leaflet-you-heading" style="transform: rotate(${userArrowHeading}deg)"><div class="leaflet-you-arrow"></div></div>`,
           iconSize: [44, 44],
           iconAnchor: [22, 22],
         }),
       }).addTo(map);
-      userMarkerRef.current.setZIndexOffset(2500);
-      if (trackingMode) map.setView(pointLatLng(userLocation.point), Math.max(map.getZoom(), 0));
+      userMarkerRef.current.setZIndexOffset(5000);
+      if (trackingMode) {
+        const now = Date.now();
+        if (now - lastFollowPanRef.current > 1400) {
+          lastFollowPanRef.current = now;
+          map.panTo(pointLatLng(userArrowPoint), { animate: true, duration: 0.35 });
+        }
+      }
     }
     if (anchorMarkerRef.current) {
       anchorMarkerRef.current.remove();
       anchorMarkerRef.current = null;
     }
-    if (startAnchor?.floorId === floor?.id && ['outside', 'nearBuilding', 'denied'].includes(locationState?.mode) && !userLocation) {
+    if (startAnchor?.floorId === floor?.id && ['outside', 'nearBuilding', 'indoorDefaultAnchor', 'indoorLowConfidence', 'denied'].includes(locationState?.mode) && !userLocation) {
       anchorMarkerRef.current = L.marker(pointLatLng(startAnchor.mapPoint), {
         pane: 'endpointPane',
         icon: L.divIcon({
@@ -730,11 +852,14 @@ export default function IndoorMapViewer({
       }).addTo(map);
       addLabel(group, { displayName: startAnchor.name || 'Main Entrance' }, startAnchor.mapPoint, 'selected');
     }
-  }, [activeRoute, activeFloorLeg, userLocation, floor?.id, trackingMode, startAnchor, locationState?.mode]);
+  }, [activeRoute, activeFloorLeg, userLocation, floor?.id, trackingMode, startAnchor, locationState?.mode, deviceHeading]);
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !activeFloorLeg?.points?.length) return;
+    const fitKey = `${activeRoute?.id || 'route'}:${activeFloorLeg.id || floor?.id}`;
+    if (lastRouteFitRef.current === fitKey) return;
+    lastRouteFitRef.current = fitKey;
     const points = activeFloorLeg.points.map(pointLatLng);
     const bounds = L.latLngBounds(points);
     map.fitBounds(bounds, {
@@ -839,6 +964,8 @@ export default function IndoorMapViewer({
   function recenterOnMe() {
     const map = mapRef.current;
     if (!map || userLocation?.floorId !== floor?.id) return;
+    const requestPermission = window.DeviceOrientationEvent?.requestPermission;
+    if (typeof requestPermission === 'function') requestPermission().catch(() => {});
     setTrackingMode(true);
     map.setView(pointLatLng(userLocation.point), Math.max(map.getZoom(), 0.5));
   }
@@ -873,9 +1000,90 @@ export default function IndoorMapViewer({
     map.setView(point, Math.max(map.getZoom(), 0));
   }
 
+  function captureRouteNodePoint(event) {
+    const map = mapRef.current;
+    const host = hostRef.current;
+    if (!map || !host) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const rect = host.getBoundingClientRect();
+    const containerPoint = L.point(event.clientX - rect.left, event.clientY - rect.top);
+    const point = map.containerPointToLatLng(containerPoint);
+    onAddRouteNode?.({ x: point.lng, y: point.lat });
+  }
+
+  function routePathPointFromEvent(event) {
+    const map = mapRef.current;
+    const host = hostRef.current;
+    if (!map || !host) return null;
+    const rect = host.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return null;
+    if (
+      event.clientX < rect.left
+      || event.clientX > rect.right
+      || event.clientY < rect.top
+      || event.clientY > rect.bottom
+    ) return null;
+    const containerPoint = L.point(event.clientX - rect.left, event.clientY - rect.top);
+    const point = map.containerPointToLatLng(containerPoint);
+    return { x: point.lng, y: point.lat };
+  }
+
+  function startRoutePathStroke(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    routePathDrawingRef.current = true;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    const point = routePathPointFromEvent(event);
+    if (point) onAddRoutePathPoint?.(point);
+  }
+
+  function continueRoutePathStroke(event) {
+    if (!routePathDrawingRef.current) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const point = routePathPointFromEvent(event);
+    if (point) onAddRoutePathPoint?.(point);
+  }
+
+  function finishRoutePathStroke(event) {
+    if (!routePathDrawingRef.current) return;
+    event.preventDefault();
+    event.stopPropagation();
+    routePathDrawingRef.current = false;
+    onFinishRoutePathDrawing?.();
+  }
+
   return (
-    <div className={['map-viewer leaflet-viewer', addPoiMode || locatingMode ? 'adding-poi' : '', floorTransitioning ? 'floor-layer-enter' : ''].filter(Boolean).join(' ')}>
+    <div className={['map-viewer leaflet-viewer', addPoiMode || locatingMode || routeNodeMode || routePathMode ? 'adding-poi' : '', floorTransitioning ? 'floor-layer-enter' : ''].filter(Boolean).join(' ')}>
       <div className="leaflet-map-host" ref={hostRef} />
+      {adminMode && routeNodeMode && !areaDrawingMode && !locatingMode && (
+        <button
+          type="button"
+          className="area-click-capture route-node-click-capture"
+          onPointerDown={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+          }}
+          onClick={captureRouteNodePoint}
+          aria-label="Place route graph node"
+        />
+      )}
+      {adminMode && routePathMode && (
+        <>
+          <div
+            className="route-path-pencil-capture"
+            onPointerDown={startRoutePathStroke}
+            onPointerMove={continueRoutePathStroke}
+            onPointerUp={finishRoutePathStroke}
+            onPointerCancel={finishRoutePathStroke}
+            aria-label="Draw route path"
+          />
+          <div className="route-path-drawing-banner">
+            Pencil mode: drag along the hallway. Release to save.
+          </div>
+        </>
+      )}
       {adminMode && areaDrawingMode && (
         <button
           type="button"
@@ -906,14 +1114,14 @@ export default function IndoorMapViewer({
         </div>
       )}
       <div className="map-toolbar leaflet-floating-toolbar">
-        <button onClick={() => mapRef.current?.zoomIn()} title="Zoom in"><Plus size={17} /></button>
-        <button onClick={() => mapRef.current?.zoomOut()} title="Zoom out">−</button>
+        <button onClick={() => mapRef.current?.zoomIn()} title="Zoom in" aria-label="Zoom in"><Plus size={17} /></button>
+        <button onClick={() => mapRef.current?.zoomOut()} title="Zoom out" aria-label="Zoom out">−</button>
         <button onClick={() => {
           const bounds = floorBoundsFromViewBox(viewBox);
           if (mapRef.current) focusInitialMobileFloor(mapRef.current, boundsFromFeatures(visualFeatures, bounds));
           setTrackingMode(false);
-        }} title="Fit floor"><Crosshair size={17} /></button>
-        <button className={trackingMode ? 'tracking-on' : ''} onClick={recenterOnMe} title="My location"><LocateFixed size={17} /></button>
+        }} title="Recenter map" aria-label="Recenter map"><Crosshair size={17} /></button>
+        <button className={trackingMode ? 'tracking-on' : ''} onClick={recenterOnMe} title="Locate me" aria-label="Locate me"><LocateFixed size={17} /></button>
       </div>
       {adminMode && (
         <div className="layer-toggles">
@@ -942,20 +1150,18 @@ export default function IndoorMapViewer({
       )}
       {!activeRoute && locationState?.message && (
         <div className={`location-guidance location-${locationState.mode || 'idle'}`}>
-          <strong>{locationState.mode === 'outside' ? 'Outside building' : locationState.mode === 'nearBuilding' ? 'Near building' : locationState.mode === 'indoorAnchored' ? 'Indoor start set' : locationState.mode === 'denied' ? 'Location off' : 'Locating'}</strong>
+          <strong>{locationState.mode === 'outside' ? 'Outside' : locationState.mode === 'nearBuilding' ? 'Near IBM' : locationState.mode === 'indoorDefaultAnchor' ? 'Default start' : locationState.mode === 'indoorLowConfidence' ? 'Low confidence' : locationState.mode === 'indoorUserConfirmed' ? 'Start set' : locationState.mode === 'denied' ? 'Location off' : 'Locating'}</strong>
           <span>{locationState.message}</span>
-          {['outside', 'nearBuilding', 'denied'].includes(locationState.mode) && <small>Phone GPS may be inaccurate indoors. Tap Locate me to set your start.</small>}
+          {['nearBuilding', 'indoorDefaultAnchor', 'indoorLowConfidence', 'denied'].includes(locationState.mode) && <small>No QR needed. Phone GPS may be inaccurate indoors, so tap Locate me if you need to adjust.</small>}
         </div>
       )}
       <div className="map-status">
-        <span>{floor.name}</span>
-        <span>{renderStats.searchable} searchable</span>
-        <span>{renderStats.visiblePoiCount} visible POIs</span>
-        <span>{renderStats.spaces} spaces</span>
-        <span>{renderStats.hiddenLabels} hidden labels</span>
-        <span>{lod.isLow ? 'Overview' : lod.isMedium ? 'Medium detail' : lod.isVeryHigh ? 'Full detail' : 'Detail'}</span>
+        <span>{shortFloorName(floor.name)}</span>
+        <span>{renderStats.searchable} places</span>
+        <span>{renderStats.visiblePoiCount} POIs</span>
         {addPoiMode && <strong><AlertTriangle size={14} /> Click the map to place a POI</strong>}
         {locatingMode && <strong><Compass size={14} /> Click your indoor position</strong>}
+        {routePathMode && <strong><Navigation size={14} /> Drawing learned route</strong>}
         {activeRoute && <strong><Navigation size={14} /> Route active</strong>}
       </div>
     </div>
