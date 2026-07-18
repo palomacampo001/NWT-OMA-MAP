@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import AppShell from './components/AppShell.jsx';
+import VoiceTestDialog from './components/VoiceTestDialog.jsx';
 import { parseSvg } from './utils/parseSvg.js';
 import { generateIndoorMapData } from './utils/detectFeatures.js';
 import { loadMapState, saveMapState } from './utils/storage.js';
@@ -142,6 +143,8 @@ export default function App() {
   const [connectorPreference, setConnectorPreference] = useState('any');
   const [highContrast, setHighContrast] = useState(() => localStorage.getItem('nwt-high-contrast') === 'true');
   const [voiceGuidance, setVoiceGuidance] = useState(() => localStorage.getItem('nwt-voice-guidance') === 'true');
+  // Show the voice-test bottom sheet after the user enables voice for the first time.
+  const [showVoiceTest, setShowVoiceTest] = useState(false);
   const [areaDrawingMode, setAreaDrawingMode] = useState(false);
   const [areaDraftPoints, setAreaDraftPoints] = useState([]);
   const [selectedVertexIndex, setSelectedVertexIndex] = useState(null);
@@ -1031,6 +1034,7 @@ export default function App() {
   }
 
   return (
+    <>
     <AppShell
       mapData={mapData}
       activeFloor={activeFloor}
@@ -1124,13 +1128,13 @@ export default function App() {
         const next = !voiceGuidance;
         setVoiceGuidance(next);
         if (next && window.speechSynthesis) {
-          // Speak immediately — this IS a user gesture so iOS allows it.
-          // force:true because setVoiceGuidance hasn't re-rendered yet.
-          const instruction = currentRouteInstruction();
-          if (instruction) {
-            pendingSpeechRef.current = instruction;
-            _doSpeak(instruction);
-          }
+          // Speak confirmation immediately — this IS a user-gesture handler
+          // so iOS Safari allows it. We always speak the confirmation first,
+          // then queue the current route instruction if one exists.
+          _doSpeak('Voice guidance is now enabled.');
+          pendingSpeechRef.current = currentRouteInstruction() || '';
+          // Show the voice test sheet so the user can confirm they heard it.
+          setShowVoiceTest(true);
         }
       }}
       onDrainSpeech={drainPendingSpeech}
@@ -1155,5 +1159,17 @@ export default function App() {
       onLoadSample={resetDemo}
       onClearAll={clearAll}
     />
+    {showVoiceTest && (
+      <VoiceTestDialog
+        onSpeak={(text) => _doSpeak(text)}
+        onConfirm={() => setShowVoiceTest(false)}
+        onDismiss={() => {
+          setShowVoiceTest(false);
+          setVoiceGuidance(false);
+          if (window.speechSynthesis) window.speechSynthesis.cancel();
+        }}
+      />
+    )}
+    </>
   );
 }
