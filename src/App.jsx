@@ -1095,7 +1095,28 @@ export default function App() {
       onRouteTo={startRouteTo}
       onConnectorPreferenceChange={setConnectorPreference}
       onToggleHighContrast={() => setHighContrast((value) => !value)}
-      onToggleVoiceGuidance={() => setVoiceGuidance((value) => !value)}
+      onToggleVoiceGuidance={() => {
+        const next = !voiceGuidance;
+        setVoiceGuidance(next);
+        // iOS Safari silently blocks speechSynthesis unless the first call
+        // happens inside a direct user-gesture handler. Speak a silent
+        // utterance here (volume 0, no text) to unlock the audio session so
+        // subsequent automatic announcements from useEffect work on mobile.
+        if (next && window.speechSynthesis) {
+          const unlock = new SpeechSynthesisUtterance(' ');
+          unlock.volume = 0;
+          unlock.rate = 1;
+          const voices = voicesRef.current.length ? voicesRef.current : window.speechSynthesis.getVoices();
+          const pick =
+            voices.find((v) => v.name === 'Samantha') ||
+            voices.find((v) => v.lang.startsWith('en'));
+          if (pick) unlock.voice = pick;
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.speak(unlock);
+          // Speak the current instruction immediately after unlocking
+          unlock.onend = () => speakInstruction(currentRouteInstruction());
+        }
+      }}
       onRepeatInstruction={() => speakInstruction(currentRouteInstruction())}
       onClearRoute={clearRoute}
       onToggleAdmin={() => setAdminMode((value) => !value)}
