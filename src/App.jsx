@@ -166,33 +166,35 @@ export default function App() {
     }
   }
 
-  function speakInstruction(text) {
-    if (!voiceGuidance || !text || !window.speechSynthesis) return;
+  function bestVoice() {
+    const voices = voicesRef.current.length ? voicesRef.current : window.speechSynthesis.getVoices();
+    const preferred = [
+      'Samantha', 'Karen', 'Moira', 'Tessa', 'Veena',
+      'Google US English', 'Google UK English Female', 'Google UK English Male',
+      'Microsoft Aria Online (Natural)', 'Microsoft Jenny Online (Natural)',
+      'Microsoft Guy Online (Natural)',
+    ];
+    return (
+      preferred.reduce((found, name) => found || voices.find((v) => v.name === name), null) ||
+      voices.find((v) => v.lang.startsWith('en') && /Natural|Enhanced|Premium|Online/.test(v.name)) ||
+      voices.find((v) => v.lang.startsWith('en') && v.localService === false) ||
+      voices.find((v) => v.lang.startsWith('en')) ||
+      null
+    );
+  }
+
+  // speakInstruction — accepts an optional override so callers that already
+  // know voiceGuidance is on (e.g. inside the toggle handler) can bypass the
+  // guard, which would otherwise read stale state from its closure.
+  function speakInstruction(text, { force = false } = {}) {
+    if ((!voiceGuidance && !force) || !text || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = 0.92;
     utterance.pitch = 1;
     utterance.volume = 1;
-
-    // Pick the best available English voice — prefers Siri (Safari/iOS),
-    // Google (Chrome), or any enhanced/premium voice over the default robotic one.
-    const voices = voicesRef.current.length ? voicesRef.current : window.speechSynthesis.getVoices();
-    const preferred = [
-      // iOS/macOS Siri voices
-      'Samantha', 'Karen', 'Moira', 'Tessa', 'Veena',
-      // Chrome / Android natural voices
-      'Google US English', 'Google UK English Female', 'Google UK English Male',
-      // Windows natural voices
-      'Microsoft Aria Online (Natural)', 'Microsoft Jenny Online (Natural)',
-      'Microsoft Guy Online (Natural)',
-    ];
-    const pick =
-      preferred.reduce((found, name) => found || voices.find((v) => v.name === name), null) ||
-      voices.find((v) => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Enhanced') || v.name.includes('Premium') || v.name.includes('Online'))) ||
-      voices.find((v) => v.lang.startsWith('en') && v.localService === false) ||
-      voices.find((v) => v.lang.startsWith('en'));
+    const pick = bestVoice();
     if (pick) utterance.voice = pick;
-
     window.speechSynthesis.speak(utterance);
   }
 
@@ -1098,26 +1100,19 @@ export default function App() {
       onToggleVoiceGuidance={() => {
         const next = !voiceGuidance;
         setVoiceGuidance(next);
-        // iOS Safari silently blocks speechSynthesis unless the first call
-        // happens inside a direct user-gesture handler. Speak a silent
-        // utterance here (volume 0, no text) to unlock the audio session so
-        // subsequent automatic announcements from useEffect work on mobile.
         if (next && window.speechSynthesis) {
-          const unlock = new SpeechSynthesisUtterance(' ');
-          unlock.volume = 0;
-          unlock.rate = 1;
-          const voices = voicesRef.current.length ? voicesRef.current : window.speechSynthesis.getVoices();
-          const pick =
-            voices.find((v) => v.name === 'Samantha') ||
-            voices.find((v) => v.lang.startsWith('en'));
-          if (pick) unlock.voice = pick;
-          window.speechSynthesis.cancel();
-          window.speechSynthesis.speak(unlock);
-          // Speak the current instruction immediately after unlocking
-          unlock.onend = () => speakInstruction(currentRouteInstruction());
+          // iOS Safari requires speechSynthesis to be called directly inside a
+          // user-gesture handler or it is silently blocked. We speak the real
+          // instruction here — force:true bypasses the voiceGuidance guard
+          // because setVoiceGuidance is async and the state is still false in
+          // this closure.
+          const instruction = currentRouteInstruction();
+          if (instruction) {
+            speakInstruction(instruction, { force: true });
+          }
         }
       }}
-      onRepeatInstruction={() => speakInstruction(currentRouteInstruction())}
+      onRepeatInstruction={() => speakInstruction(currentRouteInstruction(), { force: true })}
       onClearRoute={clearRoute}
       onToggleAdmin={() => setAdminMode((value) => !value)}
       onPublish={publishMap}
