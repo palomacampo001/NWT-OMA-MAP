@@ -823,8 +823,8 @@ export default function IndoorMapViewer({
         icon: L.divIcon({
           className: '',
           html: `<div class="leaflet-you-ring"></div><div class="leaflet-you-heading" style="transform: rotate(${userArrowHeading}deg)"><div class="leaflet-you-arrow"></div></div>`,
-          iconSize: [44, 44],
-          iconAnchor: [22, 22],
+          iconSize: [56, 56],
+          iconAnchor: [28, 28],
         }),
       }).addTo(map);
       userMarkerRef.current.setZIndexOffset(5000);

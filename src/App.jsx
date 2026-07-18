@@ -154,6 +154,10 @@ export default function App() {
   const routePathDraftNodeIdsRef = useRef([]);
   const routePathLastPointRef = useRef(null);
   const voicesRef = useRef([]);
+  // Mirror voiceGuidance into a ref so speakInstruction can always read the
+  // current value even when called from a useEffect (stale closure) or a
+  // gesture handler where React state hasn't re-rendered yet.
+  const voiceGuidanceRef = useRef(false);
 
   // Populate voice list as soon as the browser makes it available.
   // speechSynthesis.getVoices() is async on Chrome/Android — it fires
@@ -183,11 +187,13 @@ export default function App() {
     );
   }
 
-  // speakInstruction — accepts an optional override so callers that already
-  // know voiceGuidance is on (e.g. inside the toggle handler) can bypass the
-  // guard, which would otherwise read stale state from its closure.
+  // Keep the ref in sync with state on every render — this makes voiceGuidanceRef
+  // always readable even inside useEffect callbacks and gesture handlers where the
+  // React state closure may be stale (the iOS speech problem).
+  voiceGuidanceRef.current = voiceGuidance;
+
   function speakInstruction(text, { force = false } = {}) {
-    if ((!voiceGuidance && !force) || !text || !window.speechSynthesis) return;
+    if ((!voiceGuidanceRef.current && !force) || !text || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = 0.92;
