@@ -818,13 +818,28 @@ export default function IndoorMapViewer({
       userMarkerRef.current = null;
     }
     if (userArrowPoint) {
+      // Single SVG marker — circle and arrow are one element so they can never
+      // drift apart. viewBox is 80×80, anchor is dead center (40,40).
+      // The circle sits at cx=40 cy=40 r=26. The arrowhead points up from center.
+      const youSvg = `<svg class="leaflet-you-marker" xmlns="http://www.w3.org/2000/svg"
+        width="80" height="80" viewBox="0 0 80 80"
+        style="transform: rotate(${userArrowHeading}deg); transform-origin: 40px 40px;">
+        <!-- outer glow ring -->
+        <circle cx="40" cy="40" r="34" fill="rgba(234,88,12,0.13)" stroke="rgba(234,88,12,0.28)" stroke-width="1.5"/>
+        <!-- white circle base -->
+        <circle cx="40" cy="40" r="26" fill="white" stroke="rgba(20,31,43,0.10)" stroke-width="1"/>
+        <!-- bold orange arrowhead pointing up, base centered on circle center -->
+        <polygon points="40,10 56,46 40,38 24,46" fill="#ea580c"/>
+        <!-- small dot at arrow base -->
+        <circle cx="40" cy="40" r="5" fill="#ea580c" stroke="white" stroke-width="2"/>
+      </svg>`;
       userMarkerRef.current = L.marker(pointLatLng(userArrowPoint), {
         pane: 'endpointPane',
         icon: L.divIcon({
           className: '',
-          html: `<div class="leaflet-you-ring"></div><div class="leaflet-you-heading" style="transform: rotate(${userArrowHeading}deg)"><div class="leaflet-you-arrow"></div></div>`,
-          iconSize: [56, 56],
-          iconAnchor: [28, 28],
+          html: youSvg,
+          iconSize: [80, 80],
+          iconAnchor: [40, 40],
         }),
       }).addTo(map);
       userMarkerRef.current.setZIndexOffset(5000);

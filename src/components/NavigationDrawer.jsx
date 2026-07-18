@@ -11,6 +11,7 @@ export default function NavigationDrawer({
   onToggleLocate,
   onToggleVoiceGuidance,
   onRepeatInstruction,
+  onDrainSpeech,
 }) {
   const [expanded, setExpanded] = useState(false);
   const dragStart = useRef(null);
@@ -56,7 +57,7 @@ export default function NavigationDrawer({
     <section className={['navigation-drawer route-panel-enter', expanded ? 'expanded' : 'collapsed', ['approximateGuidance', 'previewGuidance'].includes(route.quality) ? 'approximate-guidance' : ''].filter(Boolean).join(' ')}>
       <button
         className="drawer-handle"
-        onClick={() => setExpanded((value) => !value)}
+        onClick={() => { setExpanded((value) => !value); onDrainSpeech?.(); }}
         onPointerDown={(event) => { dragStart.current = event.clientY; }}
         onPointerUp={(event) => {
           if (dragStart.current == null) return;
@@ -64,6 +65,7 @@ export default function NavigationDrawer({
           if (delta > 24) setExpanded(false);
           if (delta < -24) setExpanded(true);
           dragStart.current = null;
+          onDrainSpeech?.();
         }}
         aria-label="Show or hide directions"
       >

@@ -154,10 +154,12 @@ export default function App() {
   const routePathDraftNodeIdsRef = useRef([]);
   const routePathLastPointRef = useRef(null);
   const voicesRef = useRef([]);
-  // Mirror voiceGuidance into a ref so speakInstruction can always read the
-  // current value even when called from a useEffect (stale closure) or a
-  // gesture handler where React state hasn't re-rendered yet.
+  // Mirror voiceGuidance into a ref — always current even in stale closures.
   const voiceGuidanceRef = useRef(false);
+  // On iOS, speechSynthesis.speak() is blocked unless called synchronously
+  // inside a user gesture. We store any pending speech here so the next
+  // button tap (Repeat step, or any other tap) can drain it.
+  const pendingSpeechRef = useRef('');
 
   // Populate voice list as soon as the browser makes it available.
   // speechSynthesis.getVoices() is async on Chrome/Android — it fires
@@ -187,13 +189,11 @@ export default function App() {
     );
   }
 
-  // Keep the ref in sync with state on every render — this makes voiceGuidanceRef
-  // always readable even inside useEffect callbacks and gesture handlers where the
-  // React state closure may be stale (the iOS speech problem).
+  // Keep ref in sync on every render.
   voiceGuidanceRef.current = voiceGuidance;
 
-  function speakInstruction(text, { force = false } = {}) {
-    if ((!voiceGuidanceRef.current && !force) || !text || !window.speechSynthesis) return;
+  function _doSpeak(text) {
+    if (!text || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = 0.92;
@@ -202,6 +202,23 @@ export default function App() {
     const pick = bestVoice();
     if (pick) utterance.voice = pick;
     window.speechSynthesis.speak(utterance);
+  }
+
+  function speakInstruction(text, { force = false } = {}) {
+    if ((!voiceGuidanceRef.current && !force) || !text) return;
+    // Store as pending regardless — if iOS blocked the call below, the next
+    // user tap via drainPendingSpeech() will speak it.
+    pendingSpeechRef.current = text;
+    _doSpeak(text);
+  }
+
+  // Called inside every direct user-gesture handler so iOS gets a chance to
+  // speak anything that was queued by a useEffect (which iOS blocks).
+  function drainPendingSpeech() {
+    const text = pendingSpeechRef.current;
+    if (!text || !voiceGuidanceRef.current) return;
+    pendingSpeechRef.current = '';
+    _doSpeak(text);
   }
 
   function currentRouteInstruction(route = activeRoute) {
@@ -1107,18 +1124,20 @@ export default function App() {
         const next = !voiceGuidance;
         setVoiceGuidance(next);
         if (next && window.speechSynthesis) {
-          // iOS Safari requires speechSynthesis to be called directly inside a
-          // user-gesture handler or it is silently blocked. We speak the real
-          // instruction here — force:true bypasses the voiceGuidance guard
-          // because setVoiceGuidance is async and the state is still false in
-          // this closure.
+          // Speak immediately — this IS a user gesture so iOS allows it.
+          // force:true because setVoiceGuidance hasn't re-rendered yet.
           const instruction = currentRouteInstruction();
           if (instruction) {
-            speakInstruction(instruction, { force: true });
+            pendingSpeechRef.current = instruction;
+            _doSpeak(instruction);
           }
         }
       }}
-      onRepeatInstruction={() => speakInstruction(currentRouteInstruction(), { force: true })}
+      onDrainSpeech={drainPendingSpeech}
+      onRepeatInstruction={() => {
+        drainPendingSpeech();
+        speakInstruction(currentRouteInstruction(), { force: true });
+      }}
       onClearRoute={clearRoute}
       onToggleAdmin={() => setAdminMode((value) => !value)}
       onPublish={publishMap}
