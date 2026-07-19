@@ -656,9 +656,13 @@ export default function App() {
     });
   }, [mapData.floors, routeOrigin, routeDestination, routeDestinationFloor, routeGraphs, connectorPreference]);
 
-  // Reset step index whenever a new route is calculated
+  // Reset step index whenever a new route is calculated.
+  // Clear spokenRouteRef at the same time so the voice effect re-fires for the new route.
   useEffect(() => {
-    if (activeRoute?.id) setActiveNavigationStepIndex(0);
+    if (activeRoute?.id) {
+      setActiveNavigationStepIndex(0);
+      spokenRouteRef.current = '';   // ← allow voice to fire for the new route
+    }
   }, [activeRoute?.id]);
 
   useEffect(() => {
@@ -667,11 +671,12 @@ export default function App() {
     const instructions = activeRoute.instructions || [];
     const step = instructions[activeNavigationStepIndex] || instructions[0];
     const instruction = step?.text || currentRouteInstruction(activeRoute);
-    const signature = `${activeRoute.id}:${activeNavigationStepIndex}:${instruction}`;
+    // Include activeFloorId so floor switches can re-trigger the instruction.
+    const signature = `${activeRoute.id}:${activeNavigationStepIndex}:${activeFloorId}:${instruction}`;
     if (spokenRouteRef.current === signature) return;
     spokenRouteRef.current = signature;
     speakInstruction(instruction);
-  }, [activeRoute?.id, activeRoute?.quality, activeRoute?.routeAvailable, activeNavigationStepIndex, voiceGuidance]);
+  }, [activeRoute?.id, activeRoute?.quality, activeRoute?.routeAvailable, activeNavigationStepIndex, activeFloorId, voiceGuidance]);
 
   function updateFloor(floorId, updater) {
     setMapData((current) => ({
