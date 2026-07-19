@@ -252,9 +252,18 @@ function generateInstructions(points, destinationName) {
       text: `${i === 1 ? 'Head' : 'Continue'} ${cardinal(from, to)} for ${Math.round(length)} map units`,
       distance: length,
       direction: cardinal(from, to),
+      // position is the waypoint the user needs to reach to complete this step.
+      // Used by routeMatcher.computeNearestStep() for proximity-based advancement.
+      position: { x: to.x, y: to.y },
     });
   }
-  steps.push({ id: 'arrive', text: `Arrive at ${destinationName}`, distance: 0, direction: 'arrive' });
+  steps.push({
+    id: 'arrive',
+    text: `Arrive at ${destinationName}`,
+    distance: 0,
+    direction: 'arrive',
+    position: points[points.length - 1] ? { x: points[points.length - 1].x, y: points[points.length - 1].y } : null,
+  });
   return steps;
 }
 

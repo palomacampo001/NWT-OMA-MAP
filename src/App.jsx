@@ -1,8 +1,21 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import AppShell from './components/AppShell.jsx';
 import VoiceTestDialog from './components/VoiceTestDialog.jsx';
 import StartLocationSheet from './components/StartLocationSheet.jsx';
 import RouteOriginRow from './components/RouteOriginRow.jsx';
+// DEV_LOCATION_SIMULATOR_ENABLED is a compile-time boolean derived from
+// VITE_DEV_LOCATION_SIMULATOR_ENABLED. Vite replaces import.meta.env.*
+// with literals before bundling, turning this into `false` in production.
+// Simulator modules use React.lazy / dynamic import so they are never
+// included in production bundles (Vite DCE removes dead dynamic import branches
+// when the condition is a compile-time constant).
+import { DEV_LOCATION_SIMULATOR_ENABLED } from './config/featureFlags.js';
+import { createLocationPipeline } from './utils/locationPipeline.js';
+// SimulatorPanel — only bundled in preview builds (flag = true).
+// React.lazy with a false condition is fully DCE'd by Vite/Rolldown.
+const SimulatorPanel = DEV_LOCATION_SIMULATOR_ENABLED
+  ? lazy(() => import('./components/SimulatorPanel.jsx'))
+  : null;
 import {
   SMART_START_LOCATION_ENABLED,
   resolveProbableOrigin,
@@ -176,6 +189,14 @@ export default function App() {
   const voicesRef = useRef([]);
   // Mirror voiceGuidance into a ref — always current even in stale closures.
   const voiceGuidanceRef = useRef(false);
+
+  // ── Live-follow pipeline & simulator refs ─────────────────────────────────
+  // These are refs (not state) so creation doesn't trigger renders.
+  const activeRouteRef = useRef(null);
+  const activeFloorIdRef = useRef('');
+  const activeNavStepRef = useRef(0);
+  const pipelineRef = useRef(null);
+  const simulatorRef = useRef(null);
   // On iOS, speechSynthesis.speak() is blocked unless called synchronously
   // inside a user gesture. We store any pending speech here so the next
   // button tap (Repeat step, or any other tap) can drain it.
@@ -378,6 +399,62 @@ export default function App() {
     if (!mapData.floors.length) return;
     setRouteGraphs(loadRouteGraphs(mapData.floors));
   }, [mapData.floors]);
+
+  // ── Mirror live-follow refs so closures inside the pipeline always see
+  //    current values without re-creating the pipeline on every render. ────────
+  useEffect(() => { activeRouteRef.current = activeRoute; });
+  useEffect(() => { activeFloorIdRef.current = activeFloorId; });
+  useEffect(() => { activeNavStepRef.current = activeNavigationStepIndex; });
+
+  // ── Initialize location pipeline & simulator once ─────────────────────────
+  useEffect(() => {
+    const pipeline = createLocationPipeline({
+      getActiveRoute:      () => activeRouteRef.current,
+      getActiveFloorId:    () => activeFloorIdRef.current,
+      getCurrentStepIndex: () => activeNavStepRef.current,
+      onMarkerUpdate: (loc) => {
+        // Only move the marker when the update came from simulation or (future) live GPS.
+        // Manual updates already call setUserLocation directly.
+        if (loc.source === 'manual') return;
+        setUserLocation({ floorId: loc.floorId, point: loc.point, source: loc.source });
+      },
+      onStepAdvance: (newIndex) => {
+        setActiveNavigationStepIndex(newIndex);
+      },
+      onOffRoute: (offRoute) => {
+        // Future: show off-route banner
+        if (import.meta.env.DEV) console.info('[pipeline] off-route:', offRoute);
+      },
+      onFloorChange: (floorId) => {
+        setActiveFloorId(floorId);
+      },
+    });
+    pipelineRef.current = pipeline;
+
+    if (DEV_LOCATION_SIMULATOR_ENABLED) {
+      // Dynamic import — Vite eliminates this entire branch (including the
+      // import() call) in production builds where DEV_LOCATION_SIMULATOR_ENABLED
+      // compiles to `false`.
+      import('./utils/locationSimulator.js').then(({ createRouteSimulator }) => {
+        const sim = createRouteSimulator({
+          getActiveRoute:          () => activeRouteRef.current,
+          getActiveFloorId:        () => activeFloorIdRef.current,
+          processLocationUpdate:   pipeline.processLocationUpdate,
+          // Called by the simulator on every floor transition so the pipeline's
+          // exponential smoothing state does not bleed across floor boundaries.
+          onPipelineReset:         () => pipeline.reset(),
+        });
+        simulatorRef.current = sim;
+      });
+    }
+
+    return () => {
+      simulatorRef.current?.destroy();
+      simulatorRef.current = null;
+      pipelineRef.current = null;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally run once — refs keep values current
 
   function updateRouteGraph(floorId, updater) {
     setRouteGraphs((current) => {
@@ -668,6 +745,8 @@ export default function App() {
       lastRouteIdRef.current = activeRoute.id;
       setActiveNavigationStepIndex(0);
       spokenRouteRef.current = '';
+      // Reset simulator position so it walks the new route from the start
+      simulatorRef.current?.reset();
     }
 
     if (!voiceGuidance || !activeRoute) return;
@@ -1304,6 +1383,15 @@ export default function App() {
           setPendingDestinationFloorId(null);
         }}
       />
+    )}
+    {DEV_LOCATION_SIMULATOR_ENABLED && SimulatorPanel && (
+      <Suspense fallback={null}>
+        <SimulatorPanel
+          simulator={simulatorRef.current}
+          activeRoute={activeRoute}
+          activeNavigationStepIndex={activeNavigationStepIndex}
+        />
+      </Suspense>
     )}
     </>
   );
