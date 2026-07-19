@@ -3,6 +3,13 @@ import AppShell from './components/AppShell.jsx';
 import VoiceTestDialog from './components/VoiceTestDialog.jsx';
 import StartLocationSheet from './components/StartLocationSheet.jsx';
 import RouteOriginRow from './components/RouteOriginRow.jsx';
+import { DEV_LOCATION_SIMULATOR_ENABLED } from './config/featureFlags.js';
+import { createLocationPipeline } from './utils/locationPipeline.js';
+import { createRouteSimulator } from './utils/locationSimulator.js';
+// SimulatorPanel is only imported when the dev flag is on.
+// Static import is fine — Vite will tree-shake it in production builds.
+import SimulatorPanelComponent from './components/SimulatorPanel.jsx';
+const SimulatorPanel = DEV_LOCATION_SIMULATOR_ENABLED ? SimulatorPanelComponent : null;
 import {
   SMART_START_LOCATION_ENABLED,
   resolveProbableOrigin,
@@ -176,6 +183,14 @@ export default function App() {
   const voicesRef = useRef([]);
   // Mirror voiceGuidance into a ref — always current even in stale closures.
   const voiceGuidanceRef = useRef(false);
+
+  // ── Live-follow pipeline & simulator refs ─────────────────────────────────
+  // These are refs (not state) so creation doesn't trigger renders.
+  const activeRouteRef = useRef(null);
+  const activeFloorIdRef = useRef('');
+  const activeNavStepRef = useRef(0);
+  const pipelineRef = useRef(null);
+  const simulatorRef = useRef(null);
   // On iOS, speechSynthesis.speak() is blocked unless called synchronously
   // inside a user gesture. We store any pending speech here so the next
   // button tap (Repeat step, or any other tap) can drain it.
@@ -378,6 +393,54 @@ export default function App() {
     if (!mapData.floors.length) return;
     setRouteGraphs(loadRouteGraphs(mapData.floors));
   }, [mapData.floors]);
+
+  // ── Mirror live-follow refs so closures inside the pipeline always see
+  //    current values without re-creating the pipeline on every render. ────────
+  useEffect(() => { activeRouteRef.current = activeRoute; });
+  useEffect(() => { activeFloorIdRef.current = activeFloorId; });
+  useEffect(() => { activeNavStepRef.current = activeNavigationStepIndex; });
+
+  // ── Initialize location pipeline & simulator once ─────────────────────────
+  useEffect(() => {
+    const pipeline = createLocationPipeline({
+      getActiveRoute:      () => activeRouteRef.current,
+      getActiveFloorId:    () => activeFloorIdRef.current,
+      getCurrentStepIndex: () => activeNavStepRef.current,
+      onMarkerUpdate: (loc) => {
+        // Only move the marker when the update came from simulation or (future) live GPS.
+        // Manual updates already call setUserLocation directly.
+        if (loc.source === 'manual') return;
+        setUserLocation({ floorId: loc.floorId, point: loc.point, source: loc.source });
+      },
+      onStepAdvance: (newIndex) => {
+        setActiveNavigationStepIndex(newIndex);
+      },
+      onOffRoute: (offRoute) => {
+        // Future: show off-route banner
+        if (import.meta.env.DEV) console.info('[pipeline] off-route:', offRoute);
+      },
+      onFloorChange: (floorId) => {
+        setActiveFloorId(floorId);
+      },
+    });
+    pipelineRef.current = pipeline;
+
+    if (DEV_LOCATION_SIMULATOR_ENABLED) {
+      const sim = createRouteSimulator({
+        getActiveRoute:          () => activeRouteRef.current,
+        getActiveFloorId:        () => activeFloorIdRef.current,
+        processLocationUpdate:   pipeline.processLocationUpdate,
+      });
+      simulatorRef.current = sim;
+    }
+
+    return () => {
+      simulatorRef.current?.destroy();
+      simulatorRef.current = null;
+      pipelineRef.current = null;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally run once — refs keep values current
 
   function updateRouteGraph(floorId, updater) {
     setRouteGraphs((current) => {
@@ -668,6 +731,8 @@ export default function App() {
       lastRouteIdRef.current = activeRoute.id;
       setActiveNavigationStepIndex(0);
       spokenRouteRef.current = '';
+      // Reset simulator position so it walks the new route from the start
+      simulatorRef.current?.reset();
     }
 
     if (!voiceGuidance || !activeRoute) return;
@@ -1303,6 +1368,12 @@ export default function App() {
           setPendingDestinationFeature(null);
           setPendingDestinationFloorId(null);
         }}
+      />
+    )}
+    {DEV_LOCATION_SIMULATOR_ENABLED && SimulatorPanel && (
+      <SimulatorPanel
+        simulator={simulatorRef.current}
+        activeRoute={activeRoute}
       />
     )}
     </>
