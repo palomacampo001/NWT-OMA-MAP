@@ -79,6 +79,8 @@ export default function AppShell({
   onToggleVoiceGuidance,
   onRepeatInstruction,
   onDrainSpeech,
+  activeNavigationStepIndex,
+  onAdvanceStep,
   smartOriginLabel,
   onChangeOrigin,
   onClearRoute,
@@ -300,6 +302,8 @@ export default function AppShell({
             onToggleVoiceGuidance={onToggleVoiceGuidance}
             onRepeatInstruction={onRepeatInstruction}
             onDrainSpeech={onDrainSpeech}
+            activeNavigationStepIndex={activeNavigationStepIndex}
+            onAdvanceStep={onAdvanceStep}
             smartOriginLabel={smartOriginLabel}
             onChangeOrigin={onChangeOrigin}
           />

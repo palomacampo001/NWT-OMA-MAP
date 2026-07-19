@@ -154,6 +154,9 @@ export default function App() {
   const [voiceGuidance, setVoiceGuidance] = useState(() => localStorage.getItem('nwt-voice-guidance') === 'true');
   // Show the voice-test bottom sheet after the user enables voice for the first time.
   const [showVoiceTest, setShowVoiceTest] = useState(false);
+  // Live navigation step index — drives voice, floor, waypoint progression.
+  // Never changed by step preview. Reset to 0 when a new route starts.
+  const [activeNavigationStepIndex, setActiveNavigationStepIndex] = useState(0);
   // Smart start location state (only active when SMART_START_LOCATION_ENABLED = true)
   const [showStartSheet, setShowStartSheet] = useState(false);
   const [pendingDestinationFeature, setPendingDestinationFeature] = useState(null);
@@ -653,14 +656,22 @@ export default function App() {
     });
   }, [mapData.floors, routeOrigin, routeDestination, routeDestinationFloor, routeGraphs, connectorPreference]);
 
+  // Reset step index whenever a new route is calculated
+  useEffect(() => {
+    if (activeRoute?.id) setActiveNavigationStepIndex(0);
+  }, [activeRoute?.id]);
+
   useEffect(() => {
     if (!voiceGuidance || !activeRoute) return;
-    const instruction = currentRouteInstruction(activeRoute);
-    const signature = `${activeRoute.id}:${activeFloorId}:${instruction}`;
+    // Voice always follows activeNavigationStepIndex, never the preview index.
+    const instructions = activeRoute.instructions || [];
+    const step = instructions[activeNavigationStepIndex] || instructions[0];
+    const instruction = step?.text || currentRouteInstruction(activeRoute);
+    const signature = `${activeRoute.id}:${activeNavigationStepIndex}:${instruction}`;
     if (spokenRouteRef.current === signature) return;
     spokenRouteRef.current = signature;
     speakInstruction(instruction);
-  }, [activeRoute?.id, activeRoute?.quality, activeRoute?.routeAvailable, activeFloorId, voiceGuidance]);
+  }, [activeRoute?.id, activeRoute?.quality, activeRoute?.routeAvailable, activeNavigationStepIndex, voiceGuidance]);
 
   function updateFloor(floorId, updater) {
     setMapData((current) => ({
@@ -1212,6 +1223,8 @@ export default function App() {
         drainPendingSpeech();
         speakInstruction(currentRouteInstruction(), { force: true });
       }}
+      activeNavigationStepIndex={activeNavigationStepIndex}
+      onAdvanceStep={(index) => setActiveNavigationStepIndex(index)}
       smartOriginLabel={SMART_START_LOCATION_ENABLED ? smartOriginLabel : ''}
       onChangeOrigin={SMART_START_LOCATION_ENABLED ? () => setShowStartSheet(true) : undefined}
       onClearRoute={clearRoute}
