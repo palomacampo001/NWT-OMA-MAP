@@ -9,12 +9,24 @@ import RouteOriginRow from './components/RouteOriginRow.jsx';
 // Simulator modules use React.lazy / dynamic import so they are never
 // included in production bundles (Vite DCE removes dead dynamic import branches
 // when the condition is a compile-time constant).
-import { DEV_LOCATION_SIMULATOR_ENABLED } from './config/featureFlags.js';
+import { CALIBRATION_MODE_ENABLED, DEV_LOCATION_SIMULATOR_ENABLED } from './config/featureFlags.js';
 import { createLocationPipeline } from './utils/locationPipeline.js';
+import { latLngToMapPoint } from './utils/locationProjection.js';
+import { findNearestRoutePosition } from './utils/routeMatcher.js';
 // SimulatorPanel — only bundled in preview builds (flag = true).
 // React.lazy with a false condition is fully DCE'd by Vite/Rolldown.
 const SimulatorPanel = DEV_LOCATION_SIMULATOR_ENABLED
   ? lazy(() => import('./components/SimulatorPanel.jsx'))
+  : null;
+// Calibration components — only bundled when CALIBRATION_MODE_ENABLED is true.
+const CalibrationPanel = CALIBRATION_MODE_ENABLED
+  ? lazy(() => import('./components/CalibrationPanel.jsx'))
+  : null;
+const CalibrationPointManager = CALIBRATION_MODE_ENABLED
+  ? lazy(() => import('./components/CalibrationPointManager.jsx'))
+  : null;
+const CalibrationMapOverlay = CALIBRATION_MODE_ENABLED
+  ? lazy(() => import('./components/CalibrationMapOverlay.jsx'))
   : null;
 import {
   SMART_START_LOCATION_ENABLED,
@@ -197,6 +209,28 @@ export default function App() {
   const activeNavStepRef = useRef(0);
   const pipelineRef = useRef(null);
   const simulatorRef = useRef(null);
+
+  // ── Calibration state ────────────────────────────────────────────────────
+  const [calGpsState, setCalGpsState] = useState(null);
+  const [calMapState, setCalMapState] = useState({});
+  const [calStatusState, setCalStatusState] = useState({ watchActive: false, offRoute: false, permissionState: 'unknown' });
+  const [calPoints, setCalPoints] = useState(() => {
+    if (!CALIBRATION_MODE_ENABLED) return [];
+    try { return JSON.parse(localStorage.getItem('nwt-cal-points') || '[]'); } catch { return []; }
+  });
+  const [calWalks, setCalWalks] = useState(() => {
+    if (!CALIBRATION_MODE_ENABLED) return [];
+    try { return JSON.parse(localStorage.getItem('nwt-cal-walks') || '[]'); } catch { return []; }
+  });
+  const [showCalManager, setShowCalManager] = useState(false);
+  const [showCalOverlays, setShowCalOverlays] = useState({ raw: true, matched: true, radius: true, points: true });
+  const [capturingPoint, setCapturingPoint] = useState(false);
+  const [pendingGpsForCapture, setPendingGpsForCapture] = useState(null);
+  const calMapRef = useRef(null);
+  const walkRecorderRef = useRef(null);
+  const [isRecordingWalk, setIsRecordingWalk] = useState(false);
+  const offRouteStateRef = useRef(false);
+  const activeLegIndexRef = useRef(0);
   // On iOS, speechSynthesis.speak() is blocked unless called synchronously
   // inside a user gesture. We store any pending speech here so the next
   // button tap (Repeat step, or any other tap) can drain it.
@@ -334,6 +368,74 @@ export default function App() {
       (position) => {
         const latLng = { lat: position.coords.latitude, lng: position.coords.longitude };
         const meters = haversineDistanceMeters(latLng, BUILDING_GEOFENCE.center);
+
+        // ── Calibration mode: feed every GPS update into the pipeline ────────
+        if (CALIBRATION_MODE_ENABLED) {
+          const gps = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            heading: position.coords.heading,
+            speed: position.coords.speed,
+            altitude: position.coords.altitude,
+            timestamp: position.timestamp,
+          };
+          setCalGpsState(gps);
+          setCalStatusState((prev) => ({ ...prev, watchActive: true }));
+          setPendingGpsForCapture(gps);
+
+          // Project to map XY if calibration points are available
+          const projected = latLngToMapPoint(position.coords.latitude, position.coords.longitude, activeFloorIdRef.current);
+          let matchResult = null;
+          if (projected && pipelineRef.current) {
+            pipelineRef.current.processLocationUpdate({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              mapX: projected.x,
+              mapY: projected.y,
+              accuracy: position.coords.accuracy,
+              heading: position.coords.heading,
+              speed: position.coords.speed,
+              timestamp: position.timestamp,
+              floorId: activeFloorIdRef.current,
+              source: 'gps',
+            });
+            // Compute route match for display
+            const activeRouteCurrent = activeRouteRef.current;
+            if (activeRouteCurrent) {
+              const leg = activeRouteCurrent.legs?.find((l) => l.floorId === activeFloorIdRef.current);
+              if (leg?.points?.length >= 2) {
+                matchResult = findNearestRoutePosition({ x: projected.x, y: projected.y }, leg.points);
+              }
+            }
+          }
+          setCalMapState({
+            floorId: activeFloorIdRef.current,
+            projectedX: projected?.x ?? null,
+            projectedY: projected?.y ?? null,
+            markerX: null,
+            markerY: null,
+            distToRoute: matchResult?.distanceToRoute ?? null,
+            routeConfidence: matchResult ? (offRouteStateRef.current ? 'off-route' : 'good') : 'no-route',
+            activeStep: activeNavStepRef.current,
+          });
+          // Walk recorder
+          if (walkRecorderRef.current?.isRecording()) {
+            walkRecorderRef.current.addSample({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              accuracy: position.coords.accuracy,
+              heading: position.coords.heading,
+              speed: position.coords.speed,
+              projectedX: projected?.x ?? null,
+              projectedY: projected?.y ?? null,
+              matchedX: matchResult?.snappedPoint?.x ?? null,
+              matchedY: matchResult?.snappedPoint?.y ?? null,
+              nearestSegmentId: matchResult?.segmentIndex != null ? `seg-${matchResult.segmentIndex}` : null,
+            });
+          }
+        }
+
         if (userLocation) {
           setLocationState({
             mode: position.coords.accuracy > 40 ? 'indoorLowConfidence' : 'indoorUserConfirmed',
@@ -430,6 +532,20 @@ export default function App() {
       },
     });
     pipelineRef.current = pipeline;
+
+    // ── Walk recorder ───────────────────────────────────────────────────────
+    if (CALIBRATION_MODE_ENABLED) {
+      import('./utils/walkRecorder.js').then(({ createWalkRecorder }) => {
+        walkRecorderRef.current = createWalkRecorder({
+          getActiveRoute:      () => activeRouteRef.current,
+          getActiveFloorId:    () => activeFloorIdRef.current,
+          getCurrentStepIndex: () => activeNavStepRef.current,
+          getActiveLegIndex:   () => activeLegIndexRef.current,
+          isOffRoute:          () => offRouteStateRef.current,
+          onSampleAdded:       () => setIsRecordingWalk(true), // force re-render for count update
+        });
+      });
+    }
 
     if (DEV_LOCATION_SIMULATOR_ENABLED) {
       // Dynamic import — Vite eliminates this entire branch (including the
@@ -1032,6 +1148,41 @@ export default function App() {
     deleteFeatureApi(feature.id).catch(() => {});
   }
 
+  // ── Calibration: capture a point at the current GPS position + tapped map XY
+  function captureCalibrationPoint(mapPoint) {
+    if (!CALIBRATION_MODE_ENABLED) return;
+    const gps = pendingGpsForCapture;
+    if (!gps?.lat) { alert('No GPS fix yet — wait for a location update.'); return; }
+    const newPoint = {
+      id: `cal-${Date.now()}`,
+      floorId: activeFloorId,
+      latitude: gps.lat,
+      longitude: gps.lng,
+      accuracy: gps.accuracy,
+      heading: gps.heading,
+      mapX: mapPoint.x,
+      mapY: mapPoint.y,
+      timestamp: gps.timestamp,
+      label: 'Unnamed',
+      notes: '',
+      verified: false,
+    };
+    setCalPoints((prev) => {
+      const next = [...prev, newPoint];
+      try { localStorage.setItem('nwt-cal-points', JSON.stringify(next)); } catch {}
+      return next;
+    });
+    setCapturingPoint(false);
+    const label = window.prompt('Label for this calibration point:', 'Main entrance');
+    if (label) {
+      setCalPoints((prev) => {
+        const next = prev.map((p) => p.id === newPoint.id ? { ...p, label } : p);
+        try { localStorage.setItem('nwt-cal-points', JSON.stringify(next)); } catch {}
+        return next;
+      });
+    }
+  }
+
   function setLocation(point) {
     if (!activeFloor) return;
     const nextLocation = { floorId: activeFloor.id, point, source: 'userConfirmed' };
@@ -1279,7 +1430,10 @@ export default function App() {
       onAddPoi={addPoi}
       onAddRouteNode={addRouteGraphNode}
       onAddRoutePathPoint={addRoutePathPoint}
-      onSetLocation={setLocation}
+      onSetLocation={(point) => {
+        if (capturingPoint) { captureCalibrationPoint(point); } else { setLocation(point); }
+      }}
+      onMapReady={(ref) => { calMapRef.current = ref; }}
       onToggleLocate={() => {
         setAddPoiMode(false);
         setAreaDrawingMode(false);
@@ -1392,6 +1546,77 @@ export default function App() {
           activeNavigationStepIndex={activeNavigationStepIndex}
         />
       </Suspense>
+    )}
+    {CALIBRATION_MODE_ENABLED && CalibrationPanel && (
+      <Suspense fallback={null}>
+        <CalibrationPanel
+          gpsState={calGpsState}
+          mapState={calMapState}
+          statusState={calStatusState}
+          floors={mapData.floors}
+          activeFloorId={activeFloorId}
+          activeRoute={activeRoute}
+          activeNavigationStepIndex={activeNavigationStepIndex}
+          onFloorChange={(fid) => { selectFloor(fid); pipelineRef.current?.reset(); }}
+          onCapturePoint={() => { setCapturingPoint(true); setLocatingMode(true); }}
+          calibrationPoints={calPoints}
+          walkRecorder={walkRecorderRef.current}
+          onStartRecording={(name) => { walkRecorderRef.current?.start(name); setIsRecordingWalk(true); }}
+          onStopRecording={() => {
+            const finished = walkRecorderRef.current?.stop();
+            setIsRecordingWalk(false);
+            if (finished) setCalWalks((prev) => {
+              const next = prev.filter((w) => w.id !== finished.id);
+              next.push(finished);
+              return next;
+            });
+          }}
+          onOpenPointManager={() => setShowCalManager(true)}
+        />
+      </Suspense>
+    )}
+    {CALIBRATION_MODE_ENABLED && showCalManager && CalibrationPointManager && (
+      <Suspense fallback={null}>
+        <CalibrationPointManager
+          points={calPoints}
+          walks={calWalks}
+          floors={mapData.floors}
+          onPointsChange={(pts) => { setCalPoints(pts); try { localStorage.setItem('nwt-cal-points', JSON.stringify(pts)); } catch {} }}
+          onWalksChange={setCalWalks}
+          onClose={() => setShowCalManager(false)}
+          onReplayWalk={(walk) => {
+            if (!pipelineRef.current) return;
+            import('./utils/walkRecorder.js').then(({ replayWalkRecording }) => {
+              replayWalkRecording({
+                recording: walk,
+                processLocationUpdate: pipelineRef.current.processLocationUpdate,
+                onPipelineReset: () => pipelineRef.current?.reset(),
+              });
+            });
+          }}
+        />
+      </Suspense>
+    )}
+    {CALIBRATION_MODE_ENABLED && CalibrationMapOverlay && (
+      <Suspense fallback={null}>
+        <CalibrationMapOverlay
+          mapRef={calMapRef}
+          rawPoint={calMapState.projectedX != null ? { x: calMapState.projectedX, y: calMapState.projectedY } : null}
+          matchedPoint={calMapState.matchedX != null ? { x: calMapState.matchedX, y: calMapState.matchedY } : null}
+          accuracyRadiusPx={calGpsState?.accuracy ?? null}
+          calibPoints={calPoints}
+          currentFloorId={activeFloorId}
+          showRaw={showCalOverlays.raw}
+          showMatched={showCalOverlays.matched}
+          showAccRadius={showCalOverlays.radius}
+          showCalibPts={showCalOverlays.points}
+        />
+      </Suspense>
+    )}
+    {CALIBRATION_MODE_ENABLED && capturingPoint && (
+      <div className="cal-capture-banner" onClick={() => setCapturingPoint(false)}>
+        📍 Tap a point on the map to capture your GPS position there — or tap here to cancel
+      </div>
     )}
     </>
   );

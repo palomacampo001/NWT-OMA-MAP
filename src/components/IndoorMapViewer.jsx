@@ -310,6 +310,7 @@ export default function IndoorMapViewer({
   onInsertAreaVertex,
   onSelectAreaVertex,
   onSetLocation,
+  onMapReady,
 }) {
   const hostRef = useRef(null);
   const mapRef = useRef(null);
@@ -467,6 +468,7 @@ export default function IndoorMapViewer({
       }
     });
     mapRef.current = map;
+    onMapReady?.(mapRef);
     setZoomLevel(map.getZoom());
     layerRef.current = L.layerGroup().addTo(map);
     routeRef.current = L.layerGroup().addTo(map);

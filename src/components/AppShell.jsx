@@ -69,6 +69,7 @@ export default function AppShell({
   onAddRouteNode,
   onAddRoutePathPoint,
   onSetLocation,
+  onMapReady,
   onToggleLocate,
   onChooseStartFloor,
   onDismissStartFloorPrompt,
@@ -275,6 +276,7 @@ export default function AppShell({
               onInsertAreaVertex={onInsertAreaVertex}
               onSelectAreaVertex={onSelectAreaVertex}
               onSetLocation={onSetLocation}
+              onMapReady={onMapReady}
             />
           ) : adminMode ? (
             <EmptyState onUpload={onUpload} onLoadSample={onLoadSample} />
