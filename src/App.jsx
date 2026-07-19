@@ -656,23 +656,29 @@ export default function App() {
     });
   }, [mapData.floors, routeOrigin, routeDestination, routeDestinationFloor, routeGraphs, connectorPreference]);
 
-  // Reset step index whenever a new route is calculated.
-  // Clear spokenRouteRef at the same time so the voice effect re-fires for the new route.
+  // Single effect handles both route-change reset and voice guidance.
+  // Keeping them merged avoids a React state-update race where the reset
+  // effect's setActiveNavigationStepIndex(0) is async, causing the separate
+  // voice effect to run with a stale step index and a stale spokenRouteRef.
+  const lastRouteIdRef = useRef('');
   useEffect(() => {
-    if (activeRoute?.id) {
+    // Detect a new route and reset the step index synchronously inside this effect
+    const isNewRoute = activeRoute?.id && activeRoute.id !== lastRouteIdRef.current;
+    if (isNewRoute) {
+      lastRouteIdRef.current = activeRoute.id;
       setActiveNavigationStepIndex(0);
-      spokenRouteRef.current = '';   // ← allow voice to fire for the new route
+      spokenRouteRef.current = '';
     }
-  }, [activeRoute?.id]);
 
-  useEffect(() => {
     if (!voiceGuidance || !activeRoute) return;
     // Voice always follows activeNavigationStepIndex, never the preview index.
+    // For a brand-new route we always use step 0 regardless of stale state.
+    const stepIndex = isNewRoute ? 0 : activeNavigationStepIndex;
     const instructions = activeRoute.instructions || [];
-    const step = instructions[activeNavigationStepIndex] || instructions[0];
+    const step = instructions[stepIndex] || instructions[0];
     const instruction = step?.text || currentRouteInstruction(activeRoute);
     // Include activeFloorId so floor switches can re-trigger the instruction.
-    const signature = `${activeRoute.id}:${activeNavigationStepIndex}:${activeFloorId}:${instruction}`;
+    const signature = `${activeRoute.id}:${stepIndex}:${activeFloorId}:${instruction}`;
     if (spokenRouteRef.current === signature) return;
     spokenRouteRef.current = signature;
     speakInstruction(instruction);
