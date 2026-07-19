@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { ChevronDown, ChevronUp, LocateFixed, Navigation, Share2, Volume2, VolumeX, X } from 'lucide-react';
+import RouteOriginRow from './RouteOriginRow.jsx';
 
 export default function NavigationDrawer({
   route,
@@ -12,6 +13,8 @@ export default function NavigationDrawer({
   onToggleVoiceGuidance,
   onRepeatInstruction,
   onDrainSpeech,
+  smartOriginLabel,
+  onChangeOrigin,
 }) {
   const [expanded, setExpanded] = useState(false);
   const dragStart = useRef(null);
@@ -120,6 +123,12 @@ export default function NavigationDrawer({
             </li>
           ))}
         </ol>
+        {smartOriginLabel && (
+          <RouteOriginRow
+            label={smartOriginLabel}
+            onChangeClick={onChangeOrigin}
+          />
+        )}
         <div className="route-voice-actions">
           <button className={voiceGuidance ? 'secondary-button active' : 'secondary-button'} onClick={onToggleVoiceGuidance} aria-pressed={voiceGuidance}>
             {voiceGuidance ? <Volume2 size={16} /> : <VolumeX size={16} />}

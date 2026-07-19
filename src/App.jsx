@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import AppShell from './components/AppShell.jsx';
 import VoiceTestDialog from './components/VoiceTestDialog.jsx';
+import StartLocationSheet from './components/StartLocationSheet.jsx';
+import RouteOriginRow from './components/RouteOriginRow.jsx';
+import {
+  SMART_START_LOCATION_ENABLED,
+  resolveProbableOrigin,
+  saveConfirmedLocation,
+  setRouteArrivalLocation,
+  floorLabelFromId,
+} from './utils/locationContextService.js';
 import { parseSvg } from './utils/parseSvg.js';
 import { generateIndoorMapData } from './utils/detectFeatures.js';
 import { loadMapState, saveMapState } from './utils/storage.js';
@@ -145,6 +154,11 @@ export default function App() {
   const [voiceGuidance, setVoiceGuidance] = useState(() => localStorage.getItem('nwt-voice-guidance') === 'true');
   // Show the voice-test bottom sheet after the user enables voice for the first time.
   const [showVoiceTest, setShowVoiceTest] = useState(false);
+  // Smart start location state (only active when SMART_START_LOCATION_ENABLED = true)
+  const [showStartSheet, setShowStartSheet] = useState(false);
+  const [pendingDestinationFeature, setPendingDestinationFeature] = useState(null);
+  const [pendingDestinationFloorId, setPendingDestinationFloorId] = useState(null);
+  const [smartOriginLabel, setSmartOriginLabel] = useState('');
   const [areaDrawingMode, setAreaDrawingMode] = useState(false);
   const [areaDraftPoints, setAreaDraftPoints] = useState([]);
   const [selectedVertexIndex, setSelectedVertexIndex] = useState(null);
@@ -937,6 +951,52 @@ export default function App() {
     setSelectedId(feature.id);
     setHighlightId(feature.id);
     setQuery(formatFeatureLabel(feature));
+
+    if (SMART_START_LOCATION_ENABLED) {
+      // ── Smart path ───────────────────────────────────────────────────────────
+      const resolved = resolveProbableOrigin({
+        userLocation,
+        activeRoutePosition: null,
+        activeFloorId,
+        floors: mapData.floors,
+        locationState,
+      });
+
+      if (resolved && resolved.point) {
+        // High confidence with a usable point — start immediately, show origin row
+        setSmartOriginLabel(resolved.label || floorLabelFromId(resolved.floorId, mapData.floors));
+        setRouteDestinationId(feature.id);
+        if (!userLocation) {
+          setStartFloorPromptDismissed(true);
+          setActiveFloorId(resolved.floorId);
+          setLocationState({
+            mode: 'indoorDefaultAnchor',
+            floorId: resolved.floorId,
+            mapPoint: resolved.point,
+            message: `Starting from ${resolved.label || resolved.floorId}.`,
+          });
+          // Treat this as a confirmed user location for routing
+          setUserLocation({ floorId: resolved.floorId, point: resolved.point, source: resolved.source });
+        }
+        if (resolved.confidence !== 'high') {
+          // Medium confidence — remember destination and open sheet before routing
+          setPendingDestinationFeature(feature);
+          setPendingDestinationFloorId(floorId);
+          setShowStartSheet(true);
+          return; // don't set destination yet
+        }
+      } else {
+        // Low / unknown — open sheet before routing
+        setPendingDestinationFeature(feature);
+        setPendingDestinationFloorId(floorId);
+        setShowStartSheet(true);
+        return; // don't set destination yet
+      }
+      setRouteDestinationId(feature.id);
+      return;
+    }
+
+    // ── Legacy path (SMART_START_LOCATION_ENABLED = false) ───────────────────
     setRouteDestinationId(feature.id);
     if (!userLocation && defaultRouteOrigin) {
       setStartFloorPromptDismissed(true);
@@ -953,6 +1013,16 @@ export default function App() {
   }
 
   function clearRoute() {
+    // When smart start is on, save the destination as the likely next origin
+    if (SMART_START_LOCATION_ENABLED && routeDestination && activeRoute?.routeAvailable !== false) {
+      const destCenter = featureCenter(routeDestination);
+      const destFloor = mapData.floors.find((f) => f.features.some((feat) => feat.id === routeDestinationId));
+      if (destFloor && destCenter) {
+        const label = `${floorLabelFromId(destFloor.id, mapData.floors)} – ${formatFeatureLabel(routeDestination)}`;
+        setRouteArrivalLocation({ floorId: destFloor.id, point: destCenter, label, featureId: routeDestination.id });
+        setSmartOriginLabel('');
+      }
+    }
     setRouteDestinationId('');
     setSelectedId('');
     setHighlightId('');
@@ -1142,6 +1212,8 @@ export default function App() {
         drainPendingSpeech();
         speakInstruction(currentRouteInstruction(), { force: true });
       }}
+      smartOriginLabel={SMART_START_LOCATION_ENABLED ? smartOriginLabel : ''}
+      onChangeOrigin={SMART_START_LOCATION_ENABLED ? () => setShowStartSheet(true) : undefined}
       onClearRoute={clearRoute}
       onToggleAdmin={() => setAdminMode((value) => !value)}
       onPublish={publishMap}
@@ -1167,6 +1239,45 @@ export default function App() {
           setShowVoiceTest(false);
           setVoiceGuidance(false);
           if (window.speechSynthesis) window.speechSynthesis.cancel();
+        }}
+      />
+    )}
+    {SMART_START_LOCATION_ENABLED && showStartSheet && (
+      <StartLocationSheet
+        resolvedOrigin={resolveProbableOrigin({
+          userLocation,
+          activeRoutePosition: null,
+          activeFloorId,
+          floors: mapData.floors,
+          locationState,
+        })}
+        floors={mapData.floors}
+        activeFloorId={activeFloorId}
+        onConfirm={(loc) => {
+          setShowStartSheet(false);
+          // Apply confirmed origin
+          const nextLoc = { floorId: loc.floorId, point: loc.point, source: 'smartStartConfirmed' };
+          setUserLocation(nextLoc);
+          saveConfirmedLocation({ ...loc, source: 'smartStartConfirmed' });
+          setSmartOriginLabel(loc.label || floorLabelFromId(loc.floorId, mapData.floors));
+          setStartFloorPromptDismissed(true);
+          setActiveFloorId(loc.floorId);
+          setLocationState({ mode: 'indoorUserConfirmed', floorId: loc.floorId, mapPoint: loc.point, message: `Starting from ${loc.label}.` });
+          // Now start the pending route
+          if (pendingDestinationFeature) {
+            setSelectedId(pendingDestinationFeature.id);
+            setHighlightId(pendingDestinationFeature.id);
+            setQuery(formatFeatureLabel(pendingDestinationFeature));
+            setRouteDestinationId(pendingDestinationFeature.id);
+            setPendingDestinationFeature(null);
+            setPendingDestinationFloorId(null);
+          }
+          if (voiceGuidance) _doSpeak(`Starting from ${loc.label}.`);
+        }}
+        onDismiss={() => {
+          setShowStartSheet(false);
+          setPendingDestinationFeature(null);
+          setPendingDestinationFloorId(null);
         }}
       />
     )}

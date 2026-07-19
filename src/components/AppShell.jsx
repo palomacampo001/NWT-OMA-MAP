@@ -77,6 +77,9 @@ export default function AppShell({
   onToggleHighContrast,
   onToggleVoiceGuidance,
   onRepeatInstruction,
+  onDrainSpeech,
+  smartOriginLabel,
+  onChangeOrigin,
   onClearRoute,
   onToggleAdmin,
   onPublish,
@@ -290,6 +293,9 @@ export default function AppShell({
             onToggleLocate={onToggleLocate}
             onToggleVoiceGuidance={onToggleVoiceGuidance}
             onRepeatInstruction={onRepeatInstruction}
+            onDrainSpeech={onDrainSpeech}
+            smartOriginLabel={smartOriginLabel}
+            onChangeOrigin={onChangeOrigin}
           />
           {hasFloors && (
             <div className="floating-controls">
