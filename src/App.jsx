@@ -430,6 +430,9 @@ export default function App() {
         getActiveRoute:          () => activeRouteRef.current,
         getActiveFloorId:        () => activeFloorIdRef.current,
         processLocationUpdate:   pipeline.processLocationUpdate,
+        // Called by the simulator on every floor transition so the pipeline's
+        // exponential smoothing state does not bleed across floor boundaries.
+        onPipelineReset:         () => pipeline.reset(),
       });
       simulatorRef.current = sim;
     }
@@ -1374,6 +1377,7 @@ export default function App() {
       <SimulatorPanel
         simulator={simulatorRef.current}
         activeRoute={activeRoute}
+        activeNavigationStepIndex={activeNavigationStepIndex}
       />
     )}
     </>

@@ -76,10 +76,18 @@ export function createLocationPipeline(callbacks) {
   let smoothY = null;
   let offRouteState = false;
 
+  /**
+   * Reset smoothing and off-route state.
+   * Must be called on floor transitions — each floor has its own coordinate
+   * space so the EMA must not interpolate from the previous floor's position.
+   */
   function reset() {
     smoothX = null;
     smoothY = null;
     offRouteState = false;
+    if (import.meta.env.DEV || import.meta.env.VITE_DEV_LOCATION_SIMULATOR_ENABLED === 'true') {
+      console.info('[locationPipeline] reset (floor transition or route change)');
+    }
   }
 
   /**

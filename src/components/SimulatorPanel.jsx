@@ -17,17 +17,19 @@ const SPEEDS = [
   { label: '2×',   value: 2   },
 ];
 
-export default function SimulatorPanel({ simulator, activeRoute }) {
+export default function SimulatorPanel({ simulator, activeRoute, activeNavigationStepIndex }) {
   const [simState, setSimState] = useState('idle'); // 'idle' | 'running' | 'paused'
   const [speed, setSpeedState] = useState(1);
   const [lowAccuracy, setLowAccuracyState] = useState(false);
   const [offRoute, setOffRouteState] = useState(false);
+  const [debugInfo, setDebugInfo] = useState(null);
 
-  // Poll simulator state so the UI stays in sync
+  // Poll simulator state and debug info so the UI stays in sync
   useEffect(() => {
     if (!simulator) return;
     const id = setInterval(() => {
       setSimState(simulator.getState());
+      if (simulator.getDebugInfo) setDebugInfo(simulator.getDebugInfo());
     }, 120);
     return () => clearInterval(id);
   }, [simulator]);
@@ -151,6 +153,15 @@ export default function SimulatorPanel({ simulator, activeRoute }) {
         {simState === 'running' && <span className="sim-dot-running" />}
         {simState === 'paused' && <span className="sim-dot-paused" />}
       </div>
+
+      {debugInfo && (
+        <div className="sim-debug">
+          <div>Floor: <strong>{debugInfo.currentFloorId ?? '—'}</strong></div>
+          <div>Leg: <strong>{debugInfo.currentLegIndex + 1}/{debugInfo.legCount}</strong> · Seg: <strong>{debugInfo.segmentIndex}</strong>/{debugInfo.pointsInLeg - 1}</div>
+          <div>Pos: <strong>{debugInfo.posX},{debugInfo.posY}</strong></div>
+          <div>Step: <strong>{activeNavigationStepIndex ?? 0}</strong></div>
+        </div>
+      )}
     </div>
   );
 }
