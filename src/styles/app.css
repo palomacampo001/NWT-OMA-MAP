@@ -2151,3 +2151,21 @@ html.high-contrast .ssl-btn-secondary     { background: #fff; color: #000; borde
 html.high-contrast .ssl-location-card     { background: #fff; border-color: #0043ce; }
 html.high-contrast .route-origin-row      { background: #fff; border-color: #0043ce; }
 html.high-contrast .route-origin-change   { color: #0043ce; }
+
+/* ── Test-only banner (rendered only when SMART_START_LOCATION_ENABLED = true) ── */
+.test-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 99999;
+  background: #7c3aed;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  padding: 6px 16px;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  user-select: none;
+}

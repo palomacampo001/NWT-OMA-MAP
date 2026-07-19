@@ -11,7 +11,7 @@
 
 // ─── Feature flag ────────────────────────────────────────────────────────────
 // Set to true to enable smart start location. false = legacy Reception default.
-export const SMART_START_LOCATION_ENABLED = false;
+export const SMART_START_LOCATION_ENABLED = true;
 
 // ─── Storage keys ────────────────────────────────────────────────────────────
 const KEY_LAST_CONFIRMED  = 'noWrongTurns.lastConfirmedLocation';

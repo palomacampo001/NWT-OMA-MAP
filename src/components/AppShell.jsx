@@ -1,4 +1,5 @@
 import { Contrast, Crosshair, Download, Eraser, Pentagon, Plus, RotateCcw, Settings, Upload, Volume2, VolumeX } from 'lucide-react';
+import { SMART_START_LOCATION_ENABLED } from '../utils/locationContextService.js';
 import BrandMark from './BrandMark.jsx';
 import EmptyState from './EmptyState.jsx';
 import ExportPanel from './ExportPanel.jsx';
@@ -94,6 +95,11 @@ export default function AppShell({
 
   return (
     <div className={`app-shell ${activeRoute ? 'route-active' : ''} ${adminMode ? 'admin-mode' : 'public-mode'}`}>
+      {SMART_START_LOCATION_ENABLED && (
+        <div className="test-banner" role="status" aria-live="polite">
+          🧪 Smart Start Location — Test Version
+        </div>
+      )}
       <header className="topbar">
         <div className="brand">
           <BrandMark />
